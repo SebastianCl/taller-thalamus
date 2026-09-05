@@ -64,11 +64,11 @@ const ShirtStage = dynamic(
 
 export const TOOLS: { id: ToolId; label: string; icon: typeof Palette }[] = [
   { id: 'color', label: 'Color', icon: Palette },
-  { id: 'design', label: 'Diseño', icon: Shapes },
-  { id: 'pattern', label: 'Patrón', icon: CircleDotDashed },
-  { id: 'gradient', label: 'Degradado', icon: Blend },
-  { id: 'name', label: 'Nombre', icon: UserRound },
-  { id: 'number', label: 'Número', icon: Sparkles },
+  // { id: 'design', label: 'Diseño', icon: Shapes },
+  // { id: 'pattern', label: 'Patrón', icon: CircleDotDashed },
+  // { id: 'gradient', label: 'Degradado', icon: Blend },
+  // { id: 'name', label: 'Nombre', icon: UserRound },
+  // { id: 'number', label: 'Número', icon: Sparkles },
   { id: 'text', label: 'Texto', icon: Type },
   { id: 'logo', label: 'Imagen', icon: ImagePlus },
   { id: 'layers', label: 'Capas', icon: Layers3 },
