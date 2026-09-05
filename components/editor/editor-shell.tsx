@@ -67,9 +67,9 @@ export const TOOLS: { id: ToolId; label: string; icon: typeof Palette }[] = [
   { id: 'color', label: 'Color', icon: Palette },
   { id: 'pattern', label: 'Patrón', icon: CircleDotDashed },
   { id: 'gradient', label: 'Degradado', icon: Blend },
-  { id: 'text', label: 'Texto', icon: Type },
   { id: 'name', label: 'Nombre', icon: UserRound },
   { id: 'number', label: 'Número', icon: Sparkles },
+  { id: 'text', label: 'Texto', icon: Type },
   { id: 'logo', label: 'Imagen', icon: ImagePlus },
   { id: 'layers', label: 'Capas', icon: Layers3 },
 ];
@@ -122,14 +122,10 @@ function ContextPanel({ mobile = false }: { mobile?: boolean }) {
           <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-sky-600">{label}</p>
           <h1 className={cn('font-heading font-bold tracking-[-.025em] text-slate-950', mobile ? 'text-base' : 'mt-1 text-xl')}>Crea tu equipación</h1>
         </div>
-        <Badge variant="secondary" className="rounded-full">Local</Badge>
       </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className={cn('space-y-7', mobile ? 'p-4 pb-8' : 'p-5 pb-28')}>
           <ToolPanelContent />
-          <footer className="border-t pt-4 text-[10px] leading-relaxed text-slate-400">
-            Modelo 3D de <a className="underline underline-offset-2 hover:text-slate-600" href="https://sketchfab.com/3d-models/men-regular-apparel-fit-sporty-t-shirt-4d055bb8c1e04549a4b2dac7b27ebb2c" target="_blank" rel="noreferrer">BINARYCLOTH</a>, modificado bajo <a className="underline underline-offset-2 hover:text-slate-600" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.
-          </footer>
         </div>
       </ScrollArea>
     </aside>

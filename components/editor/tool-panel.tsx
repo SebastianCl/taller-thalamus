@@ -325,7 +325,6 @@ function LogoPanel() {
       </button>
       <input ref={input} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" onChange={(event) => void process(event.target.files?.[0])} aria-label="Seleccionar imagen" />
       <div className="rounded-xl border bg-white p-3 text-xs text-slate-500"><FileImage className="mb-2 size-5 text-sky-500" />Los SVG se sanitizan y rasterizan para la vista 3D; el original queda dentro del proyecto exportado.</div>
-      <p className="text-center text-xs text-slate-400">Zona actual: {ZONE_LABELS[zone]}</p>
     </div>
   );
 }
