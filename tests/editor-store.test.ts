@@ -18,7 +18,7 @@ describe('historial del editor', () => {
     expect(useEditorStore.getState().document.zones.front.color).toBe('#102A43');
   });
 
-  it('aplica un color a toda la camiseta como una sola operación', () => {
+  it('aplica un color a todas las zonas como una sola operación', () => {
     useEditorStore.getState().applyTemplate('duotone');
     const previousColors = Object.fromEntries(ZONE_IDS.map((zone) => [zone, useEditorStore.getState().document.zones[zone].color]));
     const historyBefore = useEditorStore.getState().past.length;

@@ -144,14 +144,12 @@ function ColorPanel() {
     <div className="space-y-6">
       <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-slate-50 px-3 py-2">
         <div>
-          <Label htmlFor="apply-color-to-all">Toda la camiseta</Label>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">Aplicar el próximo color a todas las zonas.</p>
+          <Label htmlFor="apply-color-to-all">Todas las zonas</Label>  
         </div>
-        <Switch id="apply-color-to-all" checked={applyToAll} onCheckedChange={setApplyToAll} aria-label="Aplicar color a toda la camiseta" />
+        <Switch id="apply-color-to-all" checked={applyToAll} onCheckedChange={setApplyToAll} aria-label="Aplicar color a todas las zonas" />
       </div>
       {!applyToAll ? <ZonePicker /> : null}
       <div className="space-y-3">
-        <Heading title={applyToAll ? 'Color de toda la camiseta' : `Color de ${ZONE_LABELS[zone].toLowerCase()}`} hint={applyToAll ? 'Frente, espalda, mangas, cuello y laterales cambiarán juntos.' : '24 colores preparados y entrada hexadecimal.'} />
         <ColorGrid value={style.color} onChange={applyColor} />
         <div className="flex items-center gap-2">
           <input className="size-11 rounded-lg border bg-white p-1" type="color" value={style.color} onChange={(event) => applyColor(event.target.value.toUpperCase())} aria-label="Elegir color personalizado" />

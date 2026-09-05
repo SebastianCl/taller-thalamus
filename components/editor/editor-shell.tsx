@@ -63,8 +63,8 @@ const ShirtStage = dynamic(
 );
 
 export const TOOLS: { id: ToolId; label: string; icon: typeof Palette }[] = [
-  { id: 'design', label: 'Diseño', icon: Shapes },
   { id: 'color', label: 'Color', icon: Palette },
+  { id: 'design', label: 'Diseño', icon: Shapes },
   { id: 'pattern', label: 'Patrón', icon: CircleDotDashed },
   { id: 'gradient', label: 'Degradado', icon: Blend },
   { id: 'name', label: 'Nombre', icon: UserRound },
@@ -117,12 +117,6 @@ function ContextPanel({ mobile = false }: { mobile?: boolean }) {
   const label = TOOLS.find((tool) => tool.id === activeTool)?.label;
   return (
     <aside className={cn('relative z-10 flex shrink-0 flex-col bg-white', mobile ? 'h-[42dvh] min-h-0 border-t md:hidden' : 'hidden w-[318px] border-r md:flex')} aria-label="Opciones de diseño">
-      <div className={cn('flex items-center justify-between border-b', mobile ? 'px-4 py-2.5' : 'px-5 pb-4 pt-5')}>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-sky-600">{label}</p>
-          <h1 className={cn('font-heading font-bold tracking-[-.025em] text-slate-950', mobile ? 'text-base' : 'mt-1 text-xl')}>Crea tu equipación</h1>
-        </div>
-      </div>
       <ScrollArea className="min-h-0 flex-1">
         <div className={cn('space-y-7', mobile ? 'p-4 pb-8' : 'p-5 pb-28')}>
           <ToolPanelContent />
