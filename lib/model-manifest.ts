@@ -75,7 +75,7 @@ export const MODEL_MANIFEST: ModelManifest = {
     author: 'BINARYCLOTH (@binaryclothofficial)',
     license: 'CC BY 4.0',
     sourceUrl: 'https://sketchfab.com/3d-models/men-regular-apparel-fit-sporty-t-shirt-4d055bb8c1e04549a4b2dac7b27ebb2c',
-    modifications: ['Original graphics and texture channels removed', 'BaseColor replaced with a dynamic 1K/2K atlas', 'Meshopt compression', 'Runtime scaling and a smoothed 4K UV zone mask derived from interpolated mesh normals'],
+    modifications: ['Original graphics and texture channels removed', 'BaseColor replaced with a dynamic 1K/2K atlas', 'Meshopt compression', 'Runtime scaling and a 4K UV zone mask with straight model-space side boundaries'],
   },
   meshes: {
     front: ['default'],
@@ -93,7 +93,7 @@ export const MODEL_MANIFEST: ModelManifest = {
     mask: {
       url: '/models/uv-zone-mask.png',
       sourceSize: 4096,
-      torsoSideExpansion: 0.12,
+      torsoSideExpansion: 0,
       colors: {
         front: [[255, 0, 0]],
         back: [[0, 0, 255]],

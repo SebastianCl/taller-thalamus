@@ -17,6 +17,7 @@ describe('ModelManifest', () => {
   });
 
   it('mantiene todas las regiones de la máscara dentro del atlas', () => {
+    expect(MODEL_MANIFEST.atlas.mask.torsoSideExpansion).toBe(0);
     for (const zone of ZONE_IDS) {
       expect(MODEL_MANIFEST.atlas.mask.colors[zone].length).toBeGreaterThan(0);
       expect(MODEL_MANIFEST.atlas.mask.rects[zone].length).toBeGreaterThan(0);

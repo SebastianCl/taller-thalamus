@@ -63,6 +63,7 @@ export function padUvZoneMask(mask: UvZoneMaskLookup, padding: number): UvZoneMa
 
 export function expandTorsoSideZones(mask: UvZoneMaskLookup, ratio: number): UvZoneMaskLookup {
   const zones = mask.zones.slice();
+  if (ratio <= 0) return { ...mask, zones };
   const torsoIslands = [
     { rect: MODEL_MANIFEST.atlas.zones.back.rect, primary: 'back', left: 'sideLeft', right: 'sideRight' },
     { rect: MODEL_MANIFEST.atlas.zones.front.rect, primary: 'front', left: 'sideRight', right: 'sideLeft' },

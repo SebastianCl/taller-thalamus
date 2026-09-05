@@ -8,9 +8,7 @@ import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { MeshoptDecoder } from 'meshoptimizer';
 
 const SIZE = 4096;
-const SIDE_THRESHOLD = Math.tan(Math.PI / 6); // 30 degrees from front/back.
-const VERTICAL_MEDIAN_RADIUS = 15;
-const VERTICAL_AVERAGE_RADIUS = 64;
+const SIDE_X_LIMIT = 0.42;
 
 const ZONE = {
   empty: 0,
@@ -74,12 +72,11 @@ if (primitives.length !== 1)
 
 const primitive = primitives[0];
 const positions = primitive.getAttribute('POSITION');
-const normals = primitive.getAttribute('NORMAL');
 const texcoords = primitive.getAttribute('TEXCOORD_0');
 const indices = primitive.getIndices();
-if (!positions || !normals || !texcoords || !indices) {
+if (!positions || !texcoords || !indices) {
   throw new Error(
-    'El GLB debe incluir POSITION, NORMAL, TEXCOORD_0 e índices.',
+    'El GLB debe incluir POSITION, TEXCOORD_0 e índices.',
   );
 }
 if (indices.getCount() % 3 !== 0)
@@ -198,7 +195,7 @@ let overlapPixels = 0;
 function rasterizeTriangle(triangleIndex, component) {
   const vertexIds = triangles[triangleIndex];
   const uv = vertexIds.map((vertex) => texcoords.getElement(vertex, []));
-  const normal = vertexIds.map((vertex) => normals.getElement(vertex, []));
+  const position = vertexIds.map((vertex) => positions.getElement(vertex, []));
   const points = uv.map(([u, v]) => [u * SIZE, v * SIZE]);
   const denominator =
     (points[1][1] - points[2][1]) * (points[0][0] - points[2][0]) +
@@ -248,11 +245,11 @@ function rasterizeTriangle(triangleIndex, component) {
         continue;
       }
 
-      const nx = normal[0][0] * w0 + normal[1][0] * w1 + normal[2][0] * w2;
-      const nz = normal[0][2] * w0 + normal[1][2] * w1 + normal[2][2] * w2;
+      const modelX =
+        position[0][0] * w0 + position[1][0] * w1 + position[2][0] * w2;
       zones[pixel] =
-        Math.abs(nx) > SIDE_THRESHOLD * Math.abs(nz)
-          ? nx >= 0
+        Math.abs(modelX) > SIDE_X_LIMIT
+          ? modelX >= 0
             ? ZONE.sideLeft
             : ZONE.sideRight
           : component.primaryZone;
@@ -264,120 +261,6 @@ for (const component of components) {
   for (const triangle of component.triangles)
     rasterizeTriangle(triangle, component);
 }
-
-function median(values) {
-  const sorted = [...values].sort((left, right) => left - right);
-  return sorted[Math.floor(sorted.length / 2)];
-}
-
-function fillMissing(values) {
-  const result = values.slice();
-  let previous = -1;
-  for (let index = 0; index < result.length; index += 1) {
-    if (Number.isFinite(result[index])) {
-      if (previous < 0) {
-        for (let fill = 0; fill < index; fill += 1)
-          result[fill] = result[index];
-      } else if (index - previous > 1) {
-        for (let fill = previous + 1; fill < index; fill += 1) {
-          const amount = (fill - previous) / (index - previous);
-          result[fill] =
-            result[previous] * (1 - amount) + result[index] * amount;
-        }
-      }
-      previous = index;
-    }
-  }
-  if (previous >= 0) {
-    for (let fill = previous + 1; fill < result.length; fill += 1)
-      result[fill] = result[previous];
-  }
-  return result;
-}
-
-function smoothBoundaries(values) {
-  const filled = fillMissing(values);
-  const medians = filled.map((_, index) => {
-    const window = filled
-      .slice(
-        Math.max(0, index - VERTICAL_MEDIAN_RADIUS),
-        Math.min(filled.length, index + VERTICAL_MEDIAN_RADIUS + 1),
-      )
-      .filter(Number.isFinite);
-    return window.length ? median(window) : Number.NaN;
-  });
-  return medians.map((_, index) => {
-    const window = medians
-      .slice(
-        Math.max(0, index - VERTICAL_AVERAGE_RADIUS),
-        Math.min(medians.length, index + VERTICAL_AVERAGE_RADIUS + 1),
-      )
-      .filter(Number.isFinite);
-    return window.length
-      ? window.reduce((sum, value) => sum + value, 0) / window.length
-      : Number.NaN;
-  });
-}
-
-function enforceTorsoContinuity(component) {
-  const ownerCode = component.id + 1;
-  const minX = Math.max(0, Math.floor(component.uvMin[0] * SIZE));
-  const maxX = Math.min(SIZE - 1, Math.ceil(component.uvMax[0] * SIZE));
-  const minY = Math.max(0, Math.floor(component.uvMin[1] * SIZE));
-  const maxY = Math.min(SIZE - 1, Math.ceil(component.uvMax[1] * SIZE));
-  const rowCount = maxY - minY + 1;
-  const leftBoundaries = Array(rowCount).fill(Number.NaN);
-  const rightBoundaries = Array(rowCount).fill(Number.NaN);
-
-  for (let y = minY; y <= maxY; y += 1) {
-    const primaryRuns = [];
-    let start = -1;
-    for (let x = minX; x <= maxX + 1; x += 1) {
-      const primary =
-        x <= maxX &&
-        owners[y * SIZE + x] === ownerCode &&
-        zones[y * SIZE + x] === component.primaryZone;
-      if (primary && start < 0) start = x;
-      if (!primary && start >= 0) {
-        primaryRuns.push({ start, end: x - 1, length: x - start });
-        start = -1;
-      }
-    }
-    if (!primaryRuns.length) continue;
-    const longest = Math.max(...primaryRuns.map((run) => run.length));
-    const meaningful = primaryRuns.filter(
-      (run) => run.length >= Math.max(4, longest * 0.12),
-    );
-    leftBoundaries[y - minY] = Math.min(...meaningful.map((run) => run.start));
-    rightBoundaries[y - minY] = Math.max(...meaningful.map((run) => run.end));
-  }
-
-  const left = smoothBoundaries(leftBoundaries);
-  const right = smoothBoundaries(rightBoundaries);
-  const leftZone =
-    component.primaryZone === ZONE.front ? ZONE.sideRight : ZONE.sideLeft;
-  const rightZone =
-    component.primaryZone === ZONE.front ? ZONE.sideLeft : ZONE.sideRight;
-
-  for (let y = minY; y <= maxY; y += 1) {
-    const row = y - minY;
-    if (!Number.isFinite(left[row]) || !Number.isFinite(right[row])) continue;
-    const leftBoundary = Math.min(left[row], right[row] - 1);
-    const rightBoundary = Math.max(right[row], left[row] + 1);
-    for (let x = minX; x <= maxX; x += 1) {
-      const pixel = y * SIZE + x;
-      if (owners[pixel] !== ownerCode) continue;
-      zones[pixel] =
-        x < leftBoundary
-          ? leftZone
-          : x > rightBoundary
-            ? rightZone
-            : component.primaryZone;
-    }
-  }
-}
-
-for (const component of torso) enforceTorsoContinuity(component);
 
 const unclassifiedPixels = zones.reduce(
   (count, zone, pixel) => count + Number(owners[pixel] !== 0 && zone === 0),
@@ -471,10 +354,9 @@ console.log(
       input: inputPath,
       output: outputPath,
       size: [SIZE, SIZE],
-      sideHalfAngleDegrees: 30,
-      smoothing: {
-        medianRows: VERTICAL_MEDIAN_RADIUS * 2 + 1,
-        averageRows: VERTICAL_AVERAGE_RADIUS * 2 + 1,
+      sideBoundary: {
+        mode: 'absolute-model-x',
+        absoluteX: SIDE_X_LIMIT,
       },
       components: componentSummary,
       zones: zoneSummary,
