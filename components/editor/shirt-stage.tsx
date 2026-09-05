@@ -633,8 +633,8 @@ export function ShirtStage() {
       </div>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-white/70 bg-slate-900/82 p-1 text-white shadow-lg backdrop-blur md:flex">
-        <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover</Button>
-        <Button aria-pressed={interactionMode === 'rotate'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'rotate' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar</Button>
+        <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
+        <Button aria-pressed={interactionMode === 'rotate'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'rotate' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar camiseta</Button>
       </div>
     </section>
   );

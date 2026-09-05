@@ -296,7 +296,7 @@ function LogoPanel() {
         asset = undefined;
         throw new Error('El diseño ya contiene 20 elementos.');
       }
-      toast.add({ title: 'Logotipo añadido', description: `${file.name} se mantiene únicamente en este dispositivo.`, type: 'success' });
+      toast.add({ title: 'Imagen añadida', description: `${file.name} se mantiene únicamente en este dispositivo.`, type: 'success' });
     } catch (error) {
       toast.add({ title: 'No se pudo añadir', description: error instanceof Error ? error.message : 'Archivo no válido.', type: 'error' });
     } finally {
@@ -313,7 +313,7 @@ function LogoPanel() {
         <p className="mt-3 text-sm font-semibold">Suelta tu logo o selecciónalo</p>
         <p className="mt-1 text-xs leading-relaxed text-slate-500">PNG, JPEG, WebP o SVG · máximo 10 MB<br />PDF, EPS y AI no son compatibles</p>
       </button>
-      <input ref={input} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" onChange={(event) => void process(event.target.files?.[0])} aria-label="Seleccionar logotipo" />
+      <input ref={input} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" onChange={(event) => void process(event.target.files?.[0])} aria-label="Seleccionar imagen" />
       <div className="rounded-xl border bg-white p-3 text-xs text-slate-500"><FileImage className="mb-2 size-5 text-sky-500" />Los SVG se sanitizan y rasterizan para la vista 3D; el original queda dentro del proyecto exportado.</div>
       <p className="text-center text-xs text-slate-400">Zona actual: {ZONE_LABELS[zone]}</p>
     </div>
@@ -336,7 +336,7 @@ function LayersPanel() {
 
   if (!layers.length) return (
     <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed bg-slate-50 p-6 text-center">
-      <div><GripVertical className="mx-auto size-8 text-slate-300" /><h2 className="mt-3 text-sm font-semibold">Aún no hay capas</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Añade texto, nombre, número o un logotipo para comenzar.</p></div>
+      <div><GripVertical className="mx-auto size-8 text-slate-300" /><h2 className="mt-3 text-sm font-semibold">Aún no hay capas</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Añade texto o una imagen para comenzar.</p></div>
     </div>
   );
 

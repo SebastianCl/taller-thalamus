@@ -70,7 +70,7 @@ export const TOOLS: { id: ToolId; label: string; icon: typeof Palette }[] = [
   { id: 'text', label: 'Texto', icon: Type },
   { id: 'name', label: 'Nombre', icon: UserRound },
   { id: 'number', label: 'Número', icon: Sparkles },
-  { id: 'logo', label: 'Logotipo', icon: ImagePlus },
+  { id: 'logo', label: 'Imagen', icon: ImagePlus },
   { id: 'layers', label: 'Capas', icon: Layers3 },
 ];
 
