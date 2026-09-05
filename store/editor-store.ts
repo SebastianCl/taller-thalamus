@@ -56,6 +56,7 @@ type EditorState = {
   applyTemplate: (templateId: string) => void;
   updateZoneStyle: (zone: ZoneId, patch: Partial<ZoneStyle>, history?: boolean) => void;
   setZoneColor: (zone: ZoneId, color: string) => void;
+  setAllZoneColors: (color: string) => void;
   addTextLayer: (subtype: TextLayer['subtype'], text: string, font?: string) => string | null;
   addImageLayer: (asset: AssetRecord) => string | null;
   updateLayer: (id: string, patch: LayerPatch, history?: boolean) => void;
@@ -184,6 +185,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setZoneColor: (zone, color) => {
     if (get().document.zones[zone].color === color) return;
     get().updateZoneStyle(zone, { color });
+  },
+  setAllZoneColors: (color) => {
+    if (ZONE_IDS.every((zone) => get().document.zones[zone].color === color)) return;
+    set((state) => commit(state, (document) => {
+      for (const zone of ZONE_IDS) {
+        document.zones[zone] = { ...document.zones[zone], color };
+      }
+    }));
   },
   addTextLayer: (subtype, text, font = 'Inter') => {
     const state = get();

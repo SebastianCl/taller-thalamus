@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createDocument } from '@/lib/design';
+import { createDocument, ZONE_IDS } from '@/lib/design';
 import { useEditorStore } from '@/store/editor-store';
 
 describe('historial del editor', () => {
@@ -16,6 +16,20 @@ describe('historial del editor', () => {
     expect(useEditorStore.getState().document.zones.front.color).toBe(initial);
     useEditorStore.getState().redo();
     expect(useEditorStore.getState().document.zones.front.color).toBe('#102A43');
+  });
+
+  it('aplica un color a toda la camiseta como una sola operación', () => {
+    useEditorStore.getState().applyTemplate('duotone');
+    const previousColors = Object.fromEntries(ZONE_IDS.map((zone) => [zone, useEditorStore.getState().document.zones[zone].color]));
+    const historyBefore = useEditorStore.getState().past.length;
+
+    useEditorStore.getState().setAllZoneColors('#AABBCC');
+
+    expect(ZONE_IDS.every((zone) => useEditorStore.getState().document.zones[zone].color === '#AABBCC')).toBe(true);
+    expect(useEditorStore.getState().past).toHaveLength(historyBefore + 1);
+
+    useEditorStore.getState().undo();
+    for (const zone of ZONE_IDS) expect(useEditorStore.getState().document.zones[zone].color).toBe(previousColors[zone]);
   });
 
   it('registra un arrastre completo como una sola operación', () => {

@@ -134,18 +134,28 @@ function HexColorInput({ value, onChange }: { value: string; onChange: (color: s
 }
 
 function ColorPanel() {
+  const [applyToAll, setApplyToAll] = useState(false);
   const zone = useEditorStore((state) => state.selectedZone);
   const style = useEditorStore((state) => state.document.zones[state.selectedZone]);
   const setColor = useEditorStore((state) => state.setZoneColor);
+  const setAllColors = useEditorStore((state) => state.setAllZoneColors);
+  const applyColor = (color: string) => applyToAll ? setAllColors(color) : setColor(zone, color);
   return (
     <div className="space-y-6">
-      <ZonePicker />
+      <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-slate-50 px-3 py-2">
+        <div>
+          <Label htmlFor="apply-color-to-all">Toda la camiseta</Label>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-500">Aplicar el próximo color a todas las zonas.</p>
+        </div>
+        <Switch id="apply-color-to-all" checked={applyToAll} onCheckedChange={setApplyToAll} aria-label="Aplicar color a toda la camiseta" />
+      </div>
+      {!applyToAll ? <ZonePicker /> : null}
       <div className="space-y-3">
-        <Heading title={`Color de ${ZONE_LABELS[zone].toLowerCase()}`} hint="24 colores preparados y entrada hexadecimal." />
-        <ColorGrid value={style.color} onChange={(color) => setColor(zone, color)} />
+        <Heading title={applyToAll ? 'Color de toda la camiseta' : `Color de ${ZONE_LABELS[zone].toLowerCase()}`} hint={applyToAll ? 'Frente, espalda, mangas, cuello y laterales cambiarán juntos.' : '24 colores preparados y entrada hexadecimal.'} />
+        <ColorGrid value={style.color} onChange={applyColor} />
         <div className="flex items-center gap-2">
-          <input className="size-11 rounded-lg border bg-white p-1" type="color" value={style.color} onChange={(event) => setColor(zone, event.target.value.toUpperCase())} aria-label="Elegir color personalizado" />
-          <HexColorInput value={style.color} onChange={(color) => setColor(zone, color)} />
+          <input className="size-11 rounded-lg border bg-white p-1" type="color" value={style.color} onChange={(event) => applyColor(event.target.value.toUpperCase())} aria-label="Elegir color personalizado" />
+          <HexColorInput value={style.color} onChange={applyColor} />
         </div>
       </div>
     </div>
