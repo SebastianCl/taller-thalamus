@@ -13,6 +13,7 @@
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "generate:uv-mask": "node scripts/generate-uv-zone-mask.mjs",
     "validate:model": "node scripts/validate-model.mjs"
   },
   "dependencies": {

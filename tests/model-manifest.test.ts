@@ -16,6 +16,19 @@ describe('ModelManifest', () => {
     }
   });
 
+  it('mantiene todas las regiones de la máscara dentro del atlas', () => {
+    for (const zone of ZONE_IDS) {
+      expect(MODEL_MANIFEST.atlas.mask.colors[zone].length).toBeGreaterThan(0);
+      expect(MODEL_MANIFEST.atlas.mask.rects[zone].length).toBeGreaterThan(0);
+      for (const rect of MODEL_MANIFEST.atlas.mask.rects[zone]) {
+        expect(rect.x).toBeGreaterThanOrEqual(0);
+        expect(rect.y).toBeGreaterThanOrEqual(0);
+        expect(rect.x + rect.width).toBeLessThanOrEqual(1);
+        expect(rect.y + rect.height).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
   it('convierte UV del centro a coordenadas locales', () => {
     const rect = MODEL_MANIFEST.atlas.zones.front.rect;
     const point = localPointFromAtlasUv('front', rect.x + rect.width / 2, rect.y + rect.height / 2);

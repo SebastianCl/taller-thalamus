@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { hitTestLayer, renderAtlas } from '@/lib/atlas';
 import { MODEL_MANIFEST, localPointFromAtlasUv, zoneFromAtlasUv } from '@/lib/model-manifest';
+import { loadUvZoneMask, zoneFromUvMask, type UvZoneMaskLookup } from '@/lib/uv-zone-mask';
 import type { ViewId, ZoneId } from '@/lib/design';
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/store/editor-store';
@@ -63,7 +64,7 @@ function createTorsoGeometry(side: 'front' | 'back') {
   return remapGeometryUv(geometry, zone);
 }
 
-function useAtlasTexture() {
+function useAtlasTexture(masked = true) {
   const document = useEditorStore((state) => state.document);
   const assets = useEditorStore((state) => state.assets);
   const selectedLayerId = useEditorStore((state) => state.selectedLayerId);
@@ -71,6 +72,7 @@ function useAtlasTexture() {
   const imageCache = useRef<Record<string, HTMLImageElement>>({});
   const [imageVersion, setImageVersion] = useState(0);
   const [fontVersion, setFontVersion] = useState(0);
+  const [zoneMask, setZoneMask] = useState<UvZoneMaskLookup | null>(null);
   const canvas = useMemo(() => {
     const element = window.document.createElement('canvas');
     const mobile = window.matchMedia('(max-width: 767px)').matches;
@@ -82,11 +84,25 @@ function useAtlasTexture() {
     result.colorSpace = THREE.SRGBColorSpace;
     result.flipY = false;
     result.wrapS = result.wrapT = THREE.ClampToEdgeWrapping;
-    result.minFilter = THREE.LinearMipmapLinearFilter;
+    result.generateMipmaps = false;
+    result.minFilter = THREE.LinearFilter;
     result.magFilter = THREE.LinearFilter;
     result.anisotropy = 4;
     return result;
   }, [canvas]);
+
+  useEffect(() => {
+    if (!masked) return;
+    const controller = new AbortController();
+    void loadUvZoneMask(canvas.width, controller.signal)
+      .then(setZoneMask)
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('No se pudo aplicar la máscara UV exacta; se usará la segmentación de respaldo.', error);
+        }
+      });
+    return () => controller.abort();
+  }, [canvas, masked]);
 
   useEffect(() => {
     let disposed = false;
@@ -115,13 +131,13 @@ function useAtlasTexture() {
   }, []);
 
   useEffect(() => {
-    renderAtlas(canvas, document, assets, imageCache.current, selectedLayerId);
+    renderAtlas(canvas, document, assets, imageCache.current, selectedLayerId, masked ? zoneMask : null);
     texture.needsUpdate = true;
     invalidate();
-  }, [assets, canvas, document, fontVersion, imageVersion, invalidate, selectedLayerId, texture]);
+  }, [assets, canvas, document, fontVersion, imageVersion, invalidate, masked, selectedLayerId, texture, zoneMask]);
 
   useEffect(() => () => texture.dispose(), [texture]);
-  return texture;
+  return { texture, zoneMask };
 }
 
 function ClothMaterial({ texture, selected = false }: { texture: THREE.Texture; selected?: boolean }) {
@@ -205,7 +221,7 @@ function ProceduralJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group |
   const updateLayerLive = useEditorStore((state) => state.updateLayerLive);
   const endGesture = useEditorStore((state) => state.endGesture);
   const view = useEditorStore((state) => state.view);
-  const texture = useAtlasTexture();
+  const { texture } = useAtlasTexture(false);
   const dragLayer = useRef<string | null>(null);
 
   const geometries = useMemo(() => ({
@@ -307,7 +323,7 @@ function ProceduralJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group |
 function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | null> }) {
   const gltf = useGLTF('/models/taller-sport.glb') as unknown as { scene: THREE.Group };
   const invalidate = useThree((state) => state.invalidate);
-  const texture = useAtlasTexture();
+  const { texture, zoneMask } = useAtlasTexture();
   const fabricNormal = useMemo(() => createFabricNormalTexture(), []);
   const fabricRoughness = useMemo(() => createFabricScalarTexture(220, 18), []);
   const fabricAo = useMemo(() => createFabricScalarTexture(247, 10), []);
@@ -379,10 +395,12 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
 
   const onPointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (!event.uv) return;
-    const zone = zoneFromAtlasUv(event.uv.x, event.uv.y);
+    const zone = zoneMask
+      ? zoneFromUvMask(zoneMask, event.uv.x, event.uv.y)
+      : zoneFromAtlasUv(event.uv.x, event.uv.y);
     if (!zone) return;
     setSelectedZone(zone);
-    const point = localPointFromAtlasUv(zone, event.uv.x, event.uv.y);
+    const point = localPointFromAtlasUv(zone, event.uv.x, event.uv.y, zoneMask?.rects?.[zone]);
     const layer = hitTestLayer(useEditorStore.getState().document, zone, point.x, point.y);
     if (layer && interactionMode === 'move') {
       event.stopPropagation();
@@ -400,7 +418,7 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
     const layer = useEditorStore.getState().document.layers.find((item) => item.id === dragLayer.current);
     if (!layer) return;
     event.stopPropagation();
-    const point = localPointFromAtlasUv(layer.zone, event.uv.x, event.uv.y);
+    const point = localPointFromAtlasUv(layer.zone, event.uv.x, event.uv.y, zoneMask?.rects?.[layer.zone]);
     updateLayerLive(layer.id, point.x, point.y);
   };
   const finish = (event: ThreeEvent<PointerEvent>) => {
