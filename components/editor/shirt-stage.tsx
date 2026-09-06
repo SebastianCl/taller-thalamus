@@ -564,7 +564,11 @@ export function ShirtStage() {
         <OrbitControls
           ref={controlsRef}
           makeDefault
-          enabled={interactionMode === 'rotate'}
+          enabled
+          mouseButtons={{
+            LEFT: interactionMode === 'rotate' ? THREE.MOUSE.ROTATE : -1,
+            MIDDLE: THREE.MOUSE.ROTATE,
+          }}
           enablePan={false}
           enableDamping
           dampingFactor={0.08}
