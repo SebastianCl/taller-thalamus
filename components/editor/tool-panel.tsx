@@ -38,12 +38,12 @@ function Heading({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-function ZonePicker() {
+function ZonePicker({ label = 'Zona de la prenda' }: { label?: string }) {
   const zone = useEditorStore((state) => state.selectedZone);
   const setZone = useEditorStore((state) => state.setSelectedZone);
   return (
     <div className="space-y-2">
-      <Label htmlFor="zone-picker">Zona de la prenda</Label>
+      <Label htmlFor="zone-picker">{label}</Label>
       <Select value={zone} onValueChange={(value) => setZone(value as ZoneId)}>
         <SelectTrigger id="zone-picker" className="h-11 w-full bg-muted">
           <span className="mr-1 inline-block size-2 rounded-full bg-sky-500" />
@@ -329,6 +329,8 @@ function LogoPanel() {
 
 function LayersPanel() {
   const document = useEditorStore((state) => state.document);
+  const assets = useEditorStore((state) => state.assets);
+  const zone = useEditorStore((state) => state.selectedZone);
   const selectedId = useEditorStore((state) => state.selectedLayerId);
   const select = useEditorStore((state) => state.selectLayer);
   const update = useEditorStore((state) => state.updateLayer);
@@ -338,24 +340,23 @@ function LayersPanel() {
   const reorder = useEditorStore((state) => state.moveLayerOrder);
   const center = useEditorStore((state) => state.centerLayer);
   const setZone = useEditorStore((state) => state.setSelectedZone);
-  const selected = document.layers.find((layer) => layer.id === selectedId);
-  const layers = [...document.layers].sort((a, b) => b.order - a.order);
-
-  if (!layers.length) return (
-    <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed bg-muted p-6 text-center">
-      <div><GripVertical className="mx-auto size-8 text-muted-foreground" /><h2 className="mt-3 text-sm font-semibold">Aún no hay capas</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Añade texto o una imagen para comenzar.</p></div>
-    </div>
-  );
+  const selected = document.layers.find((layer) => layer.id === selectedId && layer.zone === zone);
+  const layers = [...document.layers].filter((layer) => layer.zone === zone).sort((a, b) => b.order - a.order);
 
   return (
     <div className="space-y-5">
       <Heading title={`Capas (${layers.length}/20)`} hint="Ordena, bloquea y edita cada elemento." />
-      <div className="space-y-2">
+      <ZonePicker label="Mostrar capas de" />
+      {layers.length ? <div className="space-y-2">
         {layers.map((layer) => (
           <div key={layer.id} className={cn('rounded-xl border bg-card p-2 transition-colors', selectedId === layer.id && 'border-sky-500 bg-accent/45 ring-1 ring-sky-500')}>
             <button type="button" aria-pressed={selectedId === layer.id} className="flex min-h-11 w-full items-center gap-2 text-left" onClick={() => select(layer.id)}>
               <GripVertical className="size-4 text-muted-foreground" />
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">{layer.type === 'image' ? <FileImage className="size-4" /> : <span className="font-semibold">T</span>}</span>
+              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+                {layer.type === 'image' && assets[layer.assetId]?.previewUrl ? (
+                  <img className="size-full object-contain" src={assets[layer.assetId].previewUrl} alt={`Miniatura de ${layer.name}`} draggable={false} />
+                ) : layer.type === 'image' ? <FileImage className="size-4" /> : <span className="font-semibold">T</span>}
+              </span>
               <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{layer.type === 'image' ? layer.name : layer.text}</span><span className="block text-[10px] text-muted-foreground">{ZONE_LABELS[layer.zone]}</span></span>
             </button>
             <div className="mt-1 flex justify-end gap-0.5">
@@ -368,7 +369,11 @@ function LayersPanel() {
             </div>
           </div>
         ))}
-      </div>
+      </div> : (
+        <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed bg-muted p-6 text-center">
+          <div><GripVertical className="mx-auto size-8 text-muted-foreground" /><h2 className="mt-3 text-sm font-semibold">No hay capas en {ZONE_LABELS[zone].toLowerCase()}</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Cambia de zona o añade un elemento para comenzar.</p></div>
+        </div>
+      )}
 
       {selected ? (
         <div className="space-y-5 rounded-2xl border bg-muted p-4">
