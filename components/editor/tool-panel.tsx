@@ -32,8 +32,8 @@ import { useEditorStore } from '@/store/editor-store';
 function Heading({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
-      {hint ? <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{hint}</p> : null}
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      {hint ? <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{hint}</p> : null}
     </div>
   );
 }
@@ -45,7 +45,7 @@ function ZonePicker() {
     <div className="space-y-2">
       <Label htmlFor="zone-picker">Zona de la prenda</Label>
       <Select value={zone} onValueChange={(value) => setZone(value as ZoneId)}>
-        <SelectTrigger id="zone-picker" className="h-11 w-full bg-slate-50">
+        <SelectTrigger id="zone-picker" className="h-11 w-full bg-muted">
           <span className="mr-1 inline-block size-2 rounded-full bg-sky-500" />
           <SelectValue>{ZONE_LABELS[zone]}</SelectValue>
         </SelectTrigger>
@@ -75,7 +75,7 @@ function DesignPanel() {
     <section>
       <div className="mb-3 flex items-end justify-between">
         <Heading title="Diseños base" hint="Un punto de partida, siempre editable." />
-        <span className="text-[11px] text-slate-400">6 opciones</span>
+        <span className="text-[11px] text-muted-foreground">6 opciones</span>
       </div>
       <div className="grid grid-cols-2 gap-2.5">
         {TEMPLATES.map((template) => {
@@ -87,12 +87,12 @@ function DesignPanel() {
               onClick={() => applyTemplate(template.id)}
               className={cn(
                 'min-h-28 rounded-2xl border p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-primary',
-                selected ? 'border-sky-500 bg-sky-50 shadow-[0_0_0_1px_#0ea5e9]' : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm',
+                selected ? 'border-sky-500 bg-accent shadow-[0_0_0_1px_#0ea5e9]' : 'bg-card hover:-translate-y-0.5 hover:shadow-sm',
               )}
               aria-pressed={selected}
             >
               <TemplateThumb colors={template.colors} />
-              <span className="mt-1 block truncate text-xs font-semibold text-slate-700">{template.name}</span>
+              <span className="mt-1 block truncate text-xs font-semibold text-foreground">{template.name}</span>
             </button>
           );
         })}
@@ -113,7 +113,7 @@ function ColorGrid({ value, onChange, compact = false }: { value: string; onChan
           onClick={() => onChange(color)}
           className={cn(
             'size-11 rounded-full border border-black/10 shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
-            value.toUpperCase() === color.toUpperCase() && 'ring-2 ring-slate-900 ring-offset-2',
+            value.toUpperCase() === color.toUpperCase() && 'ring-2 ring-foreground ring-offset-2 ring-offset-background',
           )}
           style={{ backgroundColor: color }}
         />
@@ -142,7 +142,7 @@ function ColorPanel() {
   const applyColor = (color: string) => applyToAll ? setAllColors(color) : setColor(zone, color);
   return (
     <div className="space-y-6">
-      <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-slate-50 px-3 py-2">
+      <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border bg-muted px-3 py-2">
         <div>
           <Label htmlFor="apply-color-to-all">Todas las zonas</Label>  
         </div>
@@ -152,7 +152,7 @@ function ColorPanel() {
       <div className="space-y-3">
         <ColorGrid value={style.color} onChange={applyColor} />
         <div className="flex items-center gap-2">
-          <input className="size-11 rounded-lg border bg-white p-1" type="color" value={style.color} onChange={(event) => applyColor(event.target.value.toUpperCase())} aria-label="Elegir color personalizado" />
+          <input className="size-11 rounded-lg border bg-card p-1" type="color" value={style.color} onChange={(event) => applyColor(event.target.value.toUpperCase())} aria-label="Elegir color personalizado" />
           <HexColorInput value={style.color} onChange={applyColor} />
         </div>
       </div>
@@ -190,7 +190,7 @@ function NumberControl({ label, value, min, max, step, suffix, onChange, disable
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <Label>{label}</Label>
-        <label className="flex h-8 items-center rounded-lg border bg-white px-2 font-mono text-xs">
+        <label className="flex h-8 items-center rounded-lg border bg-card px-2 font-mono text-xs">
           <input className="w-12 bg-transparent text-right outline-none" type="number" min={min} max={max} step={step} value={Number(draft.toFixed(2))} disabled={disabled} onFocus={beginGesture} onChange={(event) => update(Number(event.target.value))} onBlur={endGesture} onKeyDown={(event) => { if (event.key.startsWith('Arrow')) beginGesture(); if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={`${label} numérico`} />
           {suffix}
         </label>
@@ -210,9 +210,9 @@ function PatternPanel() {
       <div className="space-y-3">
         <Heading title="Patrón procedural" hint="Se adapta al volumen y no atraviesa las costuras." />
         <div className="grid grid-cols-3 gap-2">
-          <button type="button" aria-pressed={!style.pattern} className={cn('h-[72px] rounded-xl border bg-white text-xs font-medium', !style.pattern && 'border-sky-500 ring-1 ring-sky-500')} onClick={() => update(zone, { pattern: null })}>Sin patrón</button>
+          <button type="button" aria-pressed={!style.pattern} className={cn('h-[72px] rounded-xl border bg-card text-xs font-medium', !style.pattern && 'border-sky-500 ring-1 ring-sky-500')} onClick={() => update(zone, { pattern: null })}>Sin patrón</button>
           {PATTERNS.map((pattern) => (
-            <button key={pattern.id} type="button" aria-pressed={style.pattern === pattern.id} className={cn('overflow-hidden rounded-xl border bg-white p-1 text-[10px] font-medium', style.pattern === pattern.id && 'border-sky-500 ring-1 ring-sky-500')} onClick={() => update(zone, { pattern: pattern.id })}>
+            <button key={pattern.id} type="button" aria-pressed={style.pattern === pattern.id} className={cn('overflow-hidden rounded-xl border bg-card p-1 text-[10px] font-medium', style.pattern === pattern.id && 'border-sky-500 ring-1 ring-sky-500')} onClick={() => update(zone, { pattern: pattern.id })}>
               <span className="block h-10 rounded-lg" style={patternPreview(pattern.id)} />
               <span className="mt-1 block truncate">{pattern.name}</span>
             </button>
@@ -235,14 +235,14 @@ function GradientPanel() {
   return (
     <div className="space-y-6">
       <ZonePicker />
-      <div className="flex min-h-11 items-center justify-between rounded-xl border bg-slate-50 px-3">
-        <div><p className="text-sm font-medium">Activar degradado</p><p className="text-[11px] text-slate-500">Dos colores sobre la zona</p></div>
+      <div className="flex min-h-11 items-center justify-between rounded-xl border bg-muted px-3">
+        <div><p className="text-sm font-medium">Activar degradado</p><p className="text-[11px] text-muted-foreground">Dos colores sobre la zona</p></div>
         <Switch checked={Boolean(style.gradient)} onCheckedChange={(checked) => update(zone, { gradient: checked ? gradient : null })} aria-label="Activar degradado" />
       </div>
       <div className={cn('space-y-5', !style.gradient && 'pointer-events-none opacity-45')}>
         <div className="grid grid-cols-2 gap-3">
           {([['from', 'Color inicial'], ['to', 'Color final']] as const).map(([key, label]) => (
-            <label key={key} className="space-y-2 text-xs font-medium"><span>{label}</span><span className="flex h-11 items-center gap-2 rounded-lg border bg-white px-2"><input type="color" className="size-8 rounded" value={gradient[key]} onChange={(event) => update(zone, { gradient: { ...gradient, [key]: event.target.value.toUpperCase() } })} /><span className="font-mono text-[11px]">{gradient[key]}</span></span></label>
+            <label key={key} className="space-y-2 text-xs font-medium"><span>{label}</span><span className="flex h-11 items-center gap-2 rounded-lg border bg-card px-2"><input type="color" className="size-8 rounded" value={gradient[key]} onChange={(event) => update(zone, { gradient: { ...gradient, [key]: event.target.value.toUpperCase() } })} /><span className="font-mono text-[11px]">{gradient[key]}</span></span></label>
           ))}
         </div>
         <div className="h-16 rounded-xl border" style={{ background: `linear-gradient(${gradient.angle}deg, ${gradient.from}, ${gradient.to})` }} />
@@ -279,9 +279,9 @@ function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
           <SelectContent alignItemWithTrigger={false}>{FONTS.map((item) => <SelectItem key={item.id} value={item.id}><span style={{ fontFamily: item.id }}>{item.name}</span></SelectItem>)}</SelectContent>
         </Select>
       </div>
-      <div className="rounded-2xl border bg-slate-50 p-5 text-center">
-        <span className="block truncate text-3xl text-slate-900" style={{ fontFamily: font }}>{text || label}</span>
-        <span className="mt-2 block text-[10px] uppercase tracking-[.12em] text-slate-400">Vista previa</span>
+      <div className="rounded-2xl border bg-muted p-5 text-center">
+        <span className="block truncate text-3xl text-foreground" style={{ fontFamily: font }}>{text || label}</span>
+        <span className="mt-2 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Vista previa</span>
       </div>
       <Button className="h-11 w-full" onClick={add}>Añadir {label.toLowerCase()} <span className="ml-auto text-xs opacity-70">{layers.length}/20</span></Button>
     </div>
@@ -316,13 +316,13 @@ function LogoPanel() {
   return (
     <div className="space-y-6">
       <ZonePicker />
-      <button type="button" disabled={busy} aria-busy={busy} onClick={() => input.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={drop} className="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-5 text-center transition-colors hover:border-sky-400 hover:bg-sky-50 focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-70">
-        <span className="grid size-12 place-items-center rounded-2xl bg-white text-sky-600 shadow-sm">{busy ? <span className="size-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" /> : <UploadCloud />}</span>
-        <p className="mt-3 text-sm font-semibold">Suelta tu logo o selecciónalo</p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-500">PNG, JPEG, WebP o SVG · máximo 10 MB<br />PDF, EPS y AI no son compatibles</p>
+      <button type="button" disabled={busy} aria-busy={busy} onClick={() => input.current?.click()} onDragOver={(event) => event.preventDefault()} onDrop={drop} className="flex min-h-48 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-5 text-center text-foreground transition-colors hover:border-sky-400 hover:bg-sky-50 focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-70 dark:border-sky-700 dark:bg-sky-950/35 dark:hover:border-sky-500 dark:hover:bg-sky-950/55">
+        <span className="grid size-12 place-items-center rounded-2xl bg-card text-sky-600 shadow-sm">{busy ? <span className="size-5 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" /> : <UploadCloud />}</span>
+        <p className="mt-3 text-sm font-semibold">Añade tu imagen</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">PNG, JPEG, WebP o SVG <br />Máximo 10 MB</p>
       </button>
       <input ref={input} className="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,.png,.jpg,.jpeg,.webp,.svg" onChange={(event) => void process(event.target.files?.[0])} aria-label="Seleccionar imagen" />
-      <div className="rounded-xl border bg-white p-3 text-xs text-slate-500"><FileImage className="mb-2 size-5 text-sky-500" />Los SVG se sanitizan y rasterizan para la vista 3D; el original queda dentro del proyecto exportado.</div>
+      <div className="rounded-xl border bg-card p-3 text-xs text-muted-foreground"><FileImage className="mb-2 size-5 text-sky-500" />Los SVG se sanitizan y rasterizan para la vista 3D; el original queda dentro del proyecto exportado.</div>
     </div>
   );
 }
@@ -342,8 +342,8 @@ function LayersPanel() {
   const layers = [...document.layers].sort((a, b) => b.order - a.order);
 
   if (!layers.length) return (
-    <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed bg-slate-50 p-6 text-center">
-      <div><GripVertical className="mx-auto size-8 text-slate-300" /><h2 className="mt-3 text-sm font-semibold">Aún no hay capas</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Añade texto o una imagen para comenzar.</p></div>
+    <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed bg-muted p-6 text-center">
+      <div><GripVertical className="mx-auto size-8 text-muted-foreground" /><h2 className="mt-3 text-sm font-semibold">Aún no hay capas</h2><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Añade texto o una imagen para comenzar.</p></div>
     </div>
   );
 
@@ -352,11 +352,11 @@ function LayersPanel() {
       <Heading title={`Capas (${layers.length}/20)`} hint="Ordena, bloquea y edita cada elemento." />
       <div className="space-y-2">
         {layers.map((layer) => (
-          <div key={layer.id} className={cn('rounded-xl border bg-white p-2 transition-colors', selectedId === layer.id && 'border-sky-500 bg-sky-50/45 ring-1 ring-sky-500')}>
+          <div key={layer.id} className={cn('rounded-xl border bg-card p-2 transition-colors', selectedId === layer.id && 'border-sky-500 bg-accent/45 ring-1 ring-sky-500')}>
             <button type="button" aria-pressed={selectedId === layer.id} className="flex min-h-11 w-full items-center gap-2 text-left" onClick={() => select(layer.id)}>
-              <GripVertical className="size-4 text-slate-300" />
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600">{layer.type === 'image' ? <FileImage className="size-4" /> : <span className="font-semibold">T</span>}</span>
-              <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{layer.type === 'image' ? layer.name : layer.text}</span><span className="block text-[10px] text-slate-400">{ZONE_LABELS[layer.zone]}</span></span>
+              <GripVertical className="size-4 text-muted-foreground" />
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">{layer.type === 'image' ? <FileImage className="size-4" /> : <span className="font-semibold">T</span>}</span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-xs font-semibold">{layer.type === 'image' ? layer.name : layer.text}</span><span className="block text-[10px] text-muted-foreground">{ZONE_LABELS[layer.zone]}</span></span>
             </button>
             <div className="mt-1 flex justify-end gap-0.5">
               <Button variant="ghost" size="icon-lg" aria-label={layer.visible ? 'Ocultar capa' : 'Mostrar capa'} onClick={() => toggle(layer.id, 'visible')}>{layer.visible ? <Eye /> : <EyeOff />}</Button>
@@ -371,12 +371,12 @@ function LayersPanel() {
       </div>
 
       {selected ? (
-        <div className="space-y-5 rounded-2xl border bg-slate-50 p-4">
+        <div className="space-y-5 rounded-2xl border bg-muted p-4">
           <div className="flex items-center justify-between"><Heading title="Transformar" /><Button variant="outline" size="sm" className="h-9" disabled={selected.locked} onClick={() => center(selected.id)}><AlignCenter /> Centrar</Button></div>
           <div className="space-y-2">
             <Label>Zona</Label>
             <Select value={selected.zone} disabled={selected.locked} onValueChange={(value) => { if (value) { update(selected.id, { zone: value as ZoneId }); setZone(value as ZoneId); } }}>
-              <SelectTrigger className="h-11 w-full bg-white"><SelectValue>{ZONE_LABELS[selected.zone]}</SelectValue></SelectTrigger>
+              <SelectTrigger className="h-11 w-full bg-card"><SelectValue>{ZONE_LABELS[selected.zone]}</SelectValue></SelectTrigger>
               <SelectContent alignItemWithTrigger={false}>{ZONE_IDS.map((zone) => <SelectItem key={zone} value={zone}>{ZONE_LABELS[zone]}</SelectItem>)}</SelectContent>
             </Select>
           </div>
@@ -389,10 +389,10 @@ function LayersPanel() {
               <div className="space-y-2"><Label htmlFor="layer-content">Contenido</Label><Input id="layer-content" className="h-11" value={selected.text} maxLength={120} disabled={selected.locked} onChange={(event) => update(selected.id, { text: event.target.value } as never)} /></div>
               <div className="space-y-2"><Label htmlFor="layer-font">Tipografía</Label><Select value={selected.font} disabled={selected.locked} onValueChange={(font) => update(selected.id, { font } as never)}><SelectTrigger id="layer-font" className="h-11 w-full"><SelectValue /></SelectTrigger><SelectContent alignItemWithTrigger={false}>{FONTS.map((font) => <SelectItem key={font.id} value={font.id}>{font.name}</SelectItem>)}</SelectContent></Select></div>
               <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-2 text-xs font-medium">Color<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-white p-1" value={selected.color} onChange={(event) => update(selected.id, { color: event.target.value.toUpperCase() } as never)} /></label>
-                <label className="space-y-2 text-xs font-medium">Fondo<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-white p-1" value={selected.background ?? '#000000'} onChange={(event) => update(selected.id, { background: event.target.value.toUpperCase() } as never)} /></label>
+                <label className="space-y-2 text-xs font-medium">Color<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.color} onChange={(event) => update(selected.id, { color: event.target.value.toUpperCase() } as never)} /></label>
+                <label className="space-y-2 text-xs font-medium">Fondo<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.background ?? '#000000'} onChange={(event) => update(selected.id, { background: event.target.value.toUpperCase() } as never)} /></label>
               </div>
-              <div className="flex min-h-11 items-center justify-between rounded-lg border bg-white px-3 text-sm">Usar fondo<Switch disabled={selected.locked} checked={selected.background !== null} onCheckedChange={(checked) => update(selected.id, { background: checked ? '#000000' : null } as never)} aria-label="Usar fondo en el texto" /></div>
+              <div className="flex min-h-11 items-center justify-between rounded-lg border bg-card px-3 text-sm">Usar fondo<Switch disabled={selected.locked} checked={selected.background !== null} onCheckedChange={(checked) => update(selected.id, { background: checked ? '#000000' : null } as never)} aria-label="Usar fondo en el texto" /></div>
             </div>
           ) : null}
         </div>

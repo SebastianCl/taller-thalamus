@@ -528,8 +528,8 @@ export function ShirtStage() {
   if (webgl2 === false) {
     return (
       <div className="editor-grid flex h-full items-center justify-center p-6" role="alert">
-        <div className="max-w-sm rounded-2xl border bg-white p-6 text-center shadow-sm">
-          <Box className="mx-auto mb-3 size-9 text-slate-400" />
+        <div className="max-w-sm rounded-2xl border bg-card p-6 text-center shadow-sm">
+          <Box className="mx-auto mb-3 size-9 text-muted-foreground" />
           <h2 className="font-heading text-lg font-bold">Tu navegador no ofrece WebGL 2</h2>
           <p className="mt-2 text-sm text-muted-foreground">Puedes conservar e importar proyectos, pero el visor 3D necesita aceleración gráfica.</p>
         </div>
@@ -547,8 +547,6 @@ export function ShirtStage() {
         camera={{ position: [0, 0.15, 7.4], fov: 36, near: 0.1, far: 60 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
       >
-        <color attach="background" args={['#eef2f7']} />
-        <fog attach="fog" args={['#eef2f7', 9, 16]} />
         <ambientLight intensity={1.4} />
         <hemisphereLight args={['#f8fbff', '#536273', 1.6]} />
         <directionalLight position={[4, 6, 5]} intensity={3.2} castShadow shadow-mapSize={[1024, 1024]} />
@@ -580,9 +578,9 @@ export function ShirtStage() {
       </Canvas>
 
       {progress.active ? (
-        <output className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-slate-100/76 backdrop-blur-sm" aria-live="polite">
-          <div className="w-56 rounded-2xl border bg-white p-4 shadow-lg">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-600"><span>Cargando camiseta</span><span>{Math.round(progress.progress)}%</span></div>
+        <output className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-background/76 backdrop-blur-sm" aria-live="polite">
+          <div className="w-56 rounded-2xl border bg-card p-4 shadow-lg">
+            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground"><span>Cargando camiseta</span><span>{Math.round(progress.progress)}%</span></div>
             <progress className="mt-2 block h-1.5 w-full overflow-hidden rounded-full accent-sky-500" aria-label="Carga del modelo 3D" max={100} value={Math.round(progress.progress)} />
           </div>
         </output>
@@ -591,24 +589,24 @@ export function ShirtStage() {
       {modelError ? (
         <output className="absolute left-1/2 top-12 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 shadow-lg" aria-live="polite">
           <span>Se cargó el modelo de respaldo.</span>
-          <Button variant="outline" size="sm" className="h-8 border-amber-300 bg-white" onClick={() => { useGLTF.clear('/models/taller-sport.glb'); setModelError(false); setModelAttempt((value) => value + 1); }}>Reintentar 3D</Button>
+          <Button variant="outline" size="sm" className="h-8 border-amber-300 bg-card" onClick={() => { useGLTF.clear('/models/taller-sport.glb'); setModelError(false); setModelAttempt((value) => value + 1); }}>Reintentar 3D</Button>
         </output>
       ) : null}
 
       {contextLost ? (
-        <div className="absolute inset-0 z-30 grid place-items-center bg-slate-950/55 p-6 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="webgl-recovery-title">
-          <div className="max-w-sm rounded-2xl bg-white p-5 text-center shadow-xl">
+        <div className="absolute inset-0 z-30 grid place-items-center bg-background/80 p-6 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="webgl-recovery-title">
+          <div className="max-w-sm rounded-2xl bg-card p-5 text-center shadow-xl">
             <Box className="mx-auto mb-2 size-8 text-amber-500" />
             <h2 id="webgl-recovery-title" className="font-heading font-bold">Reconectando el visor…</h2>
-            <p className="mt-1 text-sm text-slate-500">Tu diseño está a salvo. Si no vuelve en unos segundos, recarga la página.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Tu diseño está a salvo. Si no vuelve en unos segundos, recarga la página.</p>
             <Button className="mt-4" onClick={() => location.reload()}>Recargar visor</Button>
           </div>
         </div>
       ) : null}
 
       <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center md:top-4">
-        <div className="rounded-full border border-white/80 bg-white/82 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm backdrop-blur-md">
-          Zona activa: <span className="text-slate-950">{MODEL_MANIFEST.atlas.zones[selectedZone] ? ({ front: 'Frente', back: 'Espalda', sleeveLeft: 'Manga izquierda', sleeveRight: 'Manga derecha', collar: 'Cuello', sideLeft: 'Lateral izquierdo', sideRight: 'Lateral derecho' } as Record<ZoneId, string>)[selectedZone] : 'Frente'}</span>
+        <div className="rounded-full border bg-card/82 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-md">
+          Zona activa: <span className="text-foreground">{MODEL_MANIFEST.atlas.zones[selectedZone] ? ({ front: 'Frente', back: 'Espalda', sleeveLeft: 'Manga izquierda', sleeveRight: 'Manga derecha', collar: 'Cuello', sideLeft: 'Lateral izquierdo', sideRight: 'Lateral derecho' } as Record<ZoneId, string>)[selectedZone] : 'Frente'}</span>
         </div>
       </div>
 
@@ -620,19 +618,19 @@ export function ShirtStage() {
         ))}
       </div> */}
 
-      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl border bg-white/92 p-1 shadow-lg backdrop-blur md:hidden">
+      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl border bg-card/92 p-1 shadow-lg backdrop-blur md:hidden">
         <Button aria-pressed={interactionMode === 'move'} variant={interactionMode === 'move' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
         <Button aria-pressed={interactionMode === 'rotate'} variant={interactionMode === 'rotate' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar camiseta</Button>
       </div>
 
-      <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-1 rounded-xl border border-white/80 bg-white/90 p-1 shadow-lg backdrop-blur-md md:right-5">
+      <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-1 rounded-xl border bg-card/90 p-1 shadow-lg backdrop-blur-md md:right-5">
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Restablecer vista" onClick={() => { setView('front'); controlsRef.current?.reset(); }} />}><Home /></TooltipTrigger><TooltipContent side="left">Restablecer vista</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Acercar cámara" onClick={() => zoom(0.82)} />}><ZoomIn /></TooltipTrigger><TooltipContent side="left">Acercar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Alejar cámara" onClick={() => zoom(1.22)} />}><ZoomOut /></TooltipTrigger><TooltipContent side="left">Alejar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar camiseta" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
       </div>
 
-      <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-white/70 bg-slate-900/82 p-1 text-white shadow-lg backdrop-blur md:flex">
+      <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-sidebar-border bg-sidebar/90 p-1 text-sidebar-foreground shadow-lg backdrop-blur md:flex">
         <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
         <Button aria-pressed={interactionMode === 'rotate'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'rotate' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar camiseta</Button>
       </div>

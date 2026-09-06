@@ -20,6 +20,8 @@ import {
   Shapes,
   Shirt,
   Sparkles,
+  Moon,
+  Sun,
   Type,
   Undo2,
   UserRound,
@@ -51,6 +53,7 @@ import { downloadBlob, exportProject, importProject } from '@/lib/project-io';
 import { type ToolId } from '@/lib/design';
 import { cn } from '@/lib/utils';
 import { useAutosave } from '@/hooks/use-autosave';
+import { useTheme } from '@/hooks/use-theme';
 import { useWebMcp } from '@/hooks/use-webmcp';
 import { useEditorStore } from '@/store/editor-store';
 
@@ -60,7 +63,7 @@ const ShirtStage = dynamic(
     ssr: false,
     loading: () => (
       <div className="editor-grid flex h-full items-center justify-center">
-        <div className="flex items-center gap-3 rounded-full bg-white px-4 py-2 text-sm text-slate-600 shadow-sm">
+        <div className="flex items-center gap-3 rounded-full bg-card px-4 py-2 text-sm text-muted-foreground shadow-sm">
           <span className="size-2 animate-pulse rounded-full bg-sky-500" />{' '}
           Preparando visor 3D…
         </div>
@@ -88,10 +91,10 @@ function BrandMark() {
         <Shirt className="size-5" strokeWidth={2.2} />
       </span>
       <span className="hidden leading-none xs:block sm:block">
-        <strong className="block font-heading text-[15px] font-bold tracking-[-.02em] text-slate-950">
+        <strong className="block font-heading text-[15px] font-bold tracking-[-.02em] text-foreground">
           Taller 3D
         </strong>
-        <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[.13em] text-slate-400 lg:block">
+        <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[.13em] text-muted-foreground lg:block">
           Estudio de camisetas
         </span>
       </span>
@@ -104,7 +107,7 @@ function ToolRail() {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   return (
     <nav
-      className="hidden w-[68px] shrink-0 flex-col items-center gap-1 border-r border-white/10 bg-slate-900 px-1.5 py-3 text-slate-200 md:flex lg:w-[76px] lg:px-2"
+      className="hidden w-[68px] shrink-0 flex-col items-center gap-1 border-r border-sidebar-border bg-sidebar px-1.5 py-3 text-sidebar-foreground md:flex lg:w-[76px] lg:px-2"
       aria-label="Herramientas de diseño"
     >
       {TOOLS.map(({ id, label, icon: Icon }) => (
@@ -116,7 +119,7 @@ function ToolRail() {
             'flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium transition-colors focus-visible:ring-2 focus-visible:ring-sky-300',
             activeTool === id
               ? 'bg-sky-400 text-slate-950'
-              : 'text-slate-300 hover:bg-white/8 hover:text-white',
+              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
           )}
           aria-current={activeTool === id ? 'page' : undefined}
         >
@@ -140,7 +143,7 @@ function ContextPanel({
   return (
     <aside
       className={cn(
-        'relative z-10 flex shrink-0 flex-col bg-white',
+        'relative z-10 flex shrink-0 flex-col bg-card text-card-foreground',
         mobile
           ? 'h-[42dvh] min-h-0 border-t md:hidden'
           : 'hidden w-[318px] border-r md:flex',
@@ -149,7 +152,7 @@ function ContextPanel({
     >
       {mobile && (
         <div className="flex shrink-0 items-center justify-between border-b px-4 py-2">
-          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <span className="text-sm font-medium text-foreground">{label}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -174,7 +177,7 @@ function MobileTools({ onSelect }: { onSelect: () => void }) {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   return (
     <nav
-      className="safe-bottom flex h-[68px] shrink-0 items-start justify-center gap-1 overflow-x-auto border-t bg-white px-2 pt-1.5 md:hidden"
+      className="safe-bottom flex h-[68px] shrink-0 items-start justify-center gap-1 overflow-x-auto border-t bg-card px-2 pt-1.5 md:hidden"
       aria-label="Herramientas de diseño"
     >
       {TOOLS.map(({ id, label, icon: Icon }) => (
@@ -187,7 +190,7 @@ function MobileTools({ onSelect }: { onSelect: () => void }) {
           }}
           className={cn(
             'flex min-h-12 min-w-[64px] flex-col items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium',
-            activeTool === id ? 'bg-sky-50 text-sky-700' : 'text-slate-500',
+            activeTool === id ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
           )}
           aria-current={activeTool === id ? 'page' : undefined}
           aria-pressed={activeTool === id}
@@ -207,7 +210,7 @@ function AutosaveIndicator() {
       ? {
           icon: LoaderCircle,
           label: 'Restaurando…',
-          className: 'animate-spin text-slate-400',
+          className: 'animate-spin text-muted-foreground',
         }
       : status === 'saving'
         ? {
@@ -230,7 +233,7 @@ function AutosaveIndicator() {
   return (
     <output
       aria-live="polite"
-      className="flex min-h-11 items-center gap-2 text-xs text-slate-500"
+      className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground"
     >
       <Icon className={cn('size-4', content.className)} />
       <span
@@ -239,6 +242,32 @@ function AutosaveIndicator() {
         {content.label}
       </span>
     </output>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme();
+  const dark = theme === 'dark';
+  const Icon = dark ? Sun : Moon;
+  const label = dark ? 'Activar modo claro' : 'Activar modo oscuro';
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            aria-label={label}
+            aria-pressed={dark}
+            onClick={toggleTheme}
+          />
+        }
+      >
+        <Icon />
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -396,8 +425,8 @@ export function EditorShell() {
   return (
     <TooltipProvider>
       <Toaster>
-        <main className="flex h-dvh w-full flex-col overflow-hidden bg-slate-100">
-          <header className="z-20 flex h-[62px] shrink-0 items-center justify-between border-b bg-white px-3 shadow-[0_1px_0_rgba(15,23,42,.03)] sm:px-5">
+        <main className="flex h-dvh w-full flex-col overflow-hidden bg-background">
+          <header className="z-20 flex h-[62px] shrink-0 items-center justify-between border-b bg-background px-3 shadow-[0_1px_0_rgba(15,23,42,.03)] sm:px-5">
             <BrandMark />
             <AutosaveIndicator />
             <div className="flex items-center gap-1 sm:gap-1.5">
@@ -433,7 +462,8 @@ export function EditorShell() {
                 </TooltipTrigger>
                 <TooltipContent>Rehacer · Ctrl Y</TooltipContent>
               </Tooltip>
-              <div className="mx-1 hidden h-6 w-px bg-slate-200 lg:block" />
+              <ThemeToggle />
+              <div className="mx-1 hidden h-6 w-px bg-border lg:block" />
               <Tooltip>
                 <TooltipTrigger
                   render={
@@ -493,7 +523,7 @@ export function EditorShell() {
                 aria-label={
                   exporting ? 'Preparando exportación' : 'Exportar diseño'
                 }
-                className="h-10 bg-slate-900 px-3 hover:bg-slate-800"
+                className="h-10 bg-sidebar px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 disabled={exporting}
                 onClick={() => void handleExport().catch(() => undefined)}
               >
