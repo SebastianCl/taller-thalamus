@@ -612,13 +612,13 @@ export function ShirtStage() {
         </div>
       </div>
 
-      <div className="absolute bottom-14 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/80 bg-white/90 p-1 shadow-lg backdrop-blur-md md:bottom-6">
+      {/* <div className="absolute bottom-14 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-white/80 bg-white/90 p-1 shadow-lg backdrop-blur-md md:bottom-6">
         {(['front', 'left', 'back', 'right'] as ViewId[]).map((item) => (
           <Button key={item} variant={view === item ? 'default' : 'ghost'} size="sm" className="h-9 min-w-10 px-3 text-xs" onClick={() => setView(item)} aria-pressed={view === item}>
             {item === 'front' ? 'Frente' : item === 'back' ? 'Espalda' : item === 'left' ? 'Izq.' : 'Der.'}
           </Button>
         ))}
-      </div>
+      </div> */}
 
       <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl border bg-white/92 p-1 shadow-lg backdrop-blur md:hidden">
         <Button aria-pressed={interactionMode === 'move'} variant={interactionMode === 'move' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
