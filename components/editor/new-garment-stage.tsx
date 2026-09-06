@@ -343,32 +343,6 @@ function useAtlasTexture(masked = true) {
   return { texture, zoneMask };
 }
 
-function createFabricNormalTexture() {
-  const canvas = window.document.createElement('canvas');
-  canvas.width = canvas.height = 256;
-  const context = canvas.getContext('2d');
-  if (context) {
-    context.fillStyle = 'rgb(128,128,255)';
-    context.fillRect(0, 0, 256, 256);
-    for (let y = 0; y < 256; y += 4) {
-      context.strokeStyle =
-        y % 8 === 0 ? 'rgb(136,124,250)' : 'rgb(120,132,255)';
-      context.lineWidth = 1;
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(256, y + 1);
-      context.stroke();
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.NoColorSpace;
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(18, 18);
-  texture.flipY = false;
-  texture.needsUpdate = true;
-  return texture;
-}
-
 function createFabricScalarTexture(base: number, variation: number) {
   const data = new Uint8Array(64 * 64 * 4);
   let seed = 29;
@@ -404,7 +378,6 @@ function LicensedJerseyModel({
   const viewportWidth = useThree((state) => state.size.width);
   const viewportHeight = useThree((state) => state.size.height);
   const { texture, zoneMask } = useAtlasTexture();
-  const fabricNormal = useMemo(() => createFabricNormalTexture(), []);
   const fabricRoughness = useMemo(() => createFabricScalarTexture(220, 18), []);
   const fabricAo = useMemo(() => createFabricScalarTexture(247, 10), []);
   const view = useEditorStore((state) => state.view);
@@ -447,8 +420,9 @@ function LicensedJerseyModel({
         : object.material;
       const material = (original as THREE.MeshStandardMaterial).clone();
       material.map = texture;
-      material.normalMap = fabricNormal;
-      material.normalScale.set(0.32, 0.32);
+      // Keep the garment shell smooth. A repeated fabric normal pattern is
+      // view-dependent and produced visible curved bands on the front panels.
+      material.normalMap = null;
       material.roughnessMap = fabricRoughness;
       material.metalnessMap = null;
       material.aoMap = fabricAo;
@@ -456,7 +430,7 @@ function LicensedJerseyModel({
       material.color.set('#ffffff');
       material.roughness = Math.max(0.62, material.roughness);
       material.metalness = 0;
-      material.side = THREE.DoubleSide;
+      material.side = THREE.FrontSide;
       material.needsUpdate = true;
       object.material = material;
     });
@@ -471,7 +445,6 @@ function LicensedJerseyModel({
     return clone;
   }, [
     fabricAo,
-    fabricNormal,
     fabricRoughness,
     gltf.scene,
     texture,
@@ -494,7 +467,6 @@ function LicensedJerseyModel({
     [model],
   );
 
-  useEffect(() => () => fabricNormal.dispose(), [fabricNormal]);
   useEffect(() => () => fabricRoughness.dispose(), [fabricRoughness]);
   useEffect(() => () => fabricAo.dispose(), [fabricAo]);
 

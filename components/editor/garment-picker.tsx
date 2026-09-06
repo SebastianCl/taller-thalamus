@@ -19,13 +19,10 @@ export function GarmentPicker() {
       state.exportStatus === 'working' || state.autosaveStatus === 'loading',
   );
   return (
-    <div className="flex items-center gap-2">
-      <label
-        htmlFor="garment-picker"
-        className="text-xs font-medium text-muted-foreground"
-      >
-        Prenda
-      </label>
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-sm font-semibold text-foreground">Tipo de prenda</h2>
+      </div>
       <Select
         value={modelId}
         disabled={busy}
@@ -33,7 +30,7 @@ export function GarmentPicker() {
           if (value) changeGarment(value as ModelId);
         }}
       >
-        <SelectTrigger id="garment-picker" className="h-9 w-36 bg-card">
+        <SelectTrigger id="garment-picker" className="h-11 w-full bg-muted">
           <SelectValue>{getGarment(modelId).label}</SelectValue>
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false}>
@@ -44,9 +41,9 @@ export function GarmentPicker() {
           ))}
         </SelectContent>
       </Select>
-      <span className="hidden text-xs text-muted-foreground sm:inline">
-        Tu diseño se adapta al cambiar de prenda
-      </span>
-    </div>
+      <p className="text-xs leading-relaxed text-muted-foreground">
+        Tu diseño se adapta al cambiar de prenda.
+      </p>
+    </section>
   );
 }

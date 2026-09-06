@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { GarmentPicker } from '@/components/editor/garment-picker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -416,6 +417,7 @@ function LayersPanel() {
 
 export function ToolPanelContent() {
   const active = useEditorStore((state) => state.activeTool);
+  if (active === 'type') return <GarmentPicker />;
   if (active === 'design') return <DesignPanel />;
   if (active === 'color') return <ColorPanel />;
   if (active === 'pattern') return <PatternPanel />;

@@ -40,7 +40,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { GarmentPicker } from '@/components/editor/garment-picker';
 import { getActiveCapture } from '@/lib/stage-capture';
 import { getGarment } from '@/lib/garments';
 import { ToolPanelContent } from '@/components/editor/tool-panel';
@@ -69,6 +68,7 @@ const ShirtStage = dynamic(
 );
 
 export const TOOLS: { id: ToolId; label: string; icon: typeof Palette }[] = [
+  { id: 'type', label: 'Tipo', icon: Shirt },
   { id: 'color', label: 'Color', icon: Palette },
   // { id: 'design', label: 'Diseño', icon: Shapes },
   // { id: 'pattern', label: 'Patrón', icon: CircleDotDashed },
@@ -532,8 +532,6 @@ export function EditorShell() {
               />
             </div>
           </header>
-          <div className="z-10 flex shrink-0 items-center border-b bg-background px-3 py-2 sm:px-5"><GarmentPicker /></div>
-
           <div className="flex min-h-0 flex-1">
             <ToolRail />
             <ContextPanel />

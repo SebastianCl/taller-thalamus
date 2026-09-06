@@ -12,6 +12,7 @@ export const ZONE_IDS = [
 
 export type ZoneId = GarmentZoneId;
 export type ToolId =
+  | 'type'
   | 'design'
   | 'color'
   | 'pattern'

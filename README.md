@@ -69,7 +69,7 @@ pnpm test
 
 ## Uso del editor
 
-El selector **Prenda** permite cambiar entre Camiseta, Hoodie y Camibuso.
+La herramienta **Tipo** permite cambiar entre Camiseta, Hoodie y Camibuso.
 Colores y capas se transfieren mediante posiciones relativas. Las zonas nuevas
 usan el color del frente; las que ya tienen un diseño conservado lo recuperan.
 **Nuevo diseño** mantiene la prenda elegida y limpia todas las capas y zonas.

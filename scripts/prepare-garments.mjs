@@ -49,6 +49,61 @@ const RECTS = {
   waistband: [0.02, 0.89, 0.96, 0.09],
 };
 const SIZE = 4096;
+
+function createSmoothNormals(positions, indices, sourceNormals) {
+  const normals = new Float64Array(positions.length);
+  for (let offset = 0; offset < indices.length; offset += 3) {
+    const [a, b, c] = indices.slice(offset, offset + 3);
+    const ax = positions[a * 3],
+      ay = positions[a * 3 + 1],
+      az = positions[a * 3 + 2];
+    const bx = positions[b * 3],
+      by = positions[b * 3 + 1],
+      bz = positions[b * 3 + 2];
+    const cx = positions[c * 3],
+      cy = positions[c * 3 + 1],
+      cz = positions[c * 3 + 2];
+    let nx = (by - ay) * (cz - az) - (bz - az) * (cy - ay);
+    let ny = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);
+    let nz = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+    const sourceDot = [a, b, c].reduce(
+      (sum, index) =>
+        sum +
+        nx * sourceNormals[index * 3] +
+        ny * sourceNormals[index * 3 + 1] +
+        nz * sourceNormals[index * 3 + 2],
+      0,
+    );
+    if (sourceDot < 0) [nx, ny, nz] = [-nx, -ny, -nz];
+    for (const index of [a, b, c]) {
+      normals[index * 3] += nx;
+      normals[index * 3 + 1] += ny;
+      normals[index * 3 + 2] += nz;
+    }
+  }
+
+  const sharedPositions = new Map();
+  for (let index = 0; index < positions.length / 3; index++) {
+    const key = positions.slice(index * 3, index * 3 + 3).join(',');
+    const sum = sharedPositions.get(key) ?? [0, 0, 0];
+    sum[0] += normals[index * 3];
+    sum[1] += normals[index * 3 + 1];
+    sum[2] += normals[index * 3 + 2];
+    sharedPositions.set(key, sum);
+  }
+
+  const result = new Float32Array(positions.length);
+  for (let index = 0; index < positions.length / 3; index++) {
+    const key = positions.slice(index * 3, index * 3 + 3).join(',');
+    const [x, y, z] = sharedPositions.get(key);
+    const length = Math.hypot(x, y, z) || 1;
+    result[index * 3] = x / length;
+    result[index * 3 + 1] = y / length;
+    result[index * 3 + 2] = z / length;
+  }
+  return result;
+}
+
 function crc32(buffer) {
   let crc = 0xffffffff;
   for (const byte of buffer) {
@@ -309,17 +364,22 @@ for (const src of sources) {
     );
     const remap = new Map(),
       finalPos = [],
-      finalNorm = [],
+      sourceFinalNorm = [],
       finalUv = [];
     const finalIndices = Array.from(reduced, (id) => {
       if (!remap.has(id)) {
         remap.set(id, remap.size);
         finalPos.push(...pos.slice(id * 3, id * 3 + 3));
-        finalNorm.push(...norm.slice(id * 3, id * 3 + 3));
+        sourceFinalNorm.push(...norm.slice(id * 3, id * 3 + 3));
         finalUv.push(...uv.slice(id * 2, id * 2 + 2));
       }
       return remap.get(id);
     });
+    const finalNorm = createSmoothNormals(
+      finalPos,
+      finalIndices,
+      sourceFinalNorm,
+    );
     optimization[zone] = {
       sourceTriangles: faces.length,
       triangles: finalIndices.length / 3,
@@ -339,7 +399,7 @@ for (const src of sources) {
       )
       .setAttribute(
         'NORMAL',
-        accessor('normal', new Float32Array(finalNorm), 'VEC3'),
+        accessor('normal', finalNorm, 'VEC3'),
       )
       .setAttribute(
         'TEXCOORD_0',
