@@ -22,13 +22,13 @@ export const GARMENTS = [
   {
     id: 'taller-hoodie-v1',
     label: 'Hoodie',
-    url: '/models/garments/taller-hoodie-v1.glb',
+    url: '/models/garments/taller-hoodie-v1-sketchfab.glb',
     manifest: manifests['taller-hoodie-v1'] as ModelManifest,
   },
   {
     id: 'taller-camibuso-v1',
     label: 'Camibuso',
-    url: '/models/garments/taller-camibuso-v1.glb',
+    url: '/models/garments/taller-camibuso-v1-sketchfab.glb',
     manifest: manifests['taller-camibuso-v1'] as ModelManifest,
   },
 ] as const;

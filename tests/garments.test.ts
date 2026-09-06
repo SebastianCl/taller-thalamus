@@ -24,6 +24,37 @@ beforeEach(() =>
 );
 
 describe('prendas y transferencia', () => {
+  it('recupera el hoodie V2 anterior y añade el bolsillo sin alterar el diseño', () => {
+    const source = createDocument('taller-hoodie-v1');
+    source.zones.front.color = '#123456';
+    delete (source.zones as Partial<typeof source.zones>).pocket;
+    const restored = parseDesignDocument(source);
+    expect(restored.zones.pocket.color).toBe('#123456');
+    expect(restored.zones.pocket.pattern).toBeNull();
+    expect(restored.layers).toEqual(source.layers);
+    expect(restored.zones.front).toEqual(source.zones.front);
+    expect(source.zones.pocket).toBeUndefined();
+    const invalid = structuredClone(source);
+    delete (invalid.zones as Partial<typeof invalid.zones>).hood;
+    expect(() => parseDesignDocument(invalid)).toThrow();
+  });
+
+  it('conserva el bolsillo al pasar por camibuso y deshacer el cambio', () => {
+    const store = useEditorStore.getState;
+    store().changeGarment('taller-hoodie-v1');
+    store().setSelectedZone('pocket');
+    const id = store().addTextLayer('free', 'BOLSILLO')!;
+    store().updateLayer(id, { transform: { scale: 1.2, rotation: 15 } });
+    const original = structuredClone(store().document);
+    store().changeGarment('taller-camibuso-v1');
+    expect(store().selectedZone).toBe('front');
+    expect(store().document.layers).toEqual(original.layers);
+    store().undo();
+    expect(store().document).toEqual(original);
+    store().redo();
+    store().changeGarment('taller-hoodie-v1');
+    expect(store().document.layers).toEqual(original.layers);
+  });
   it.each(MODEL_IDS)('crea y serializa %s con sus zonas', (modelId) => {
     const document = createDocument(modelId);
     expect(parseDesignDocument(JSON.parse(JSON.stringify(document)))).toEqual(
@@ -151,17 +182,31 @@ describe('aislamiento de mapas y capturas', () => {
     store().addTextLayer('free', 'CAPUCHA');
     store().changeGarment('taller-sport-v1');
     const drawn: string[] = [];
-    const context = new Proxy({
-      measureText: () => ({ width: 80 }),
-      fillText: (value: string) => drawn.push(value),
-    } as unknown as CanvasRenderingContext2D, {
-      get: (target, property) => Reflect.get(target, property) ?? (() => {}),
-    });
-    const canvas = { width: 1024, getContext: () => context } as unknown as HTMLCanvasElement;
+    const context = new Proxy(
+      {
+        measureText: () => ({ width: 80 }),
+        fillText: (value: string) => drawn.push(value),
+      } as unknown as CanvasRenderingContext2D,
+      {
+        get: (target, property) => Reflect.get(target, property) ?? (() => {}),
+      },
+    );
+    const canvas = {
+      width: 1024,
+      getContext: () => context,
+    } as unknown as HTMLCanvasElement;
     renderAtlas(canvas, store().document, {}, {});
     expect(drawn).toEqual([]);
     store().changeGarment('taller-hoodie-v1');
-    renderAtlas(canvas, store().document, {}, {}, null, null, getGarment('taller-hoodie-v1').manifest);
+    renderAtlas(
+      canvas,
+      store().document,
+      {},
+      {},
+      null,
+      null,
+      getGarment('taller-hoodie-v1').manifest,
+    );
     expect(drawn).toEqual(['CAPUCHA']);
   });
   it('no habilita la exportación tras un error hasta reiniciar la carga', () => {

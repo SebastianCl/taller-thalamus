@@ -38,3 +38,7 @@ next-env.d.ts
 /work/
 /graphify-out/
 .openai/
+
+# Full-resolution supplied originals remain local; ship optimized GLBs only.
+/scripts/model-sources/hoodie.glb
+/scripts/model-sources/long_sleeve_t-_shirt.glb

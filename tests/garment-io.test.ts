@@ -11,6 +11,7 @@ import {
   type AssetRecord,
 } from '@/lib/persistence';
 import { exportProject, importProject } from '@/lib/project-io';
+import { parseDesignDocument } from '@/lib/schema';
 
 afterEach(async () => {
   vi.unstubAllGlobals();
@@ -53,6 +54,54 @@ function retainedImage() {
 }
 
 describe('persistencia y archivos de prendas', () => {
+  it('recupera autoguardado y ZIP del hoodie anterior sin perder la imagen', async () => {
+    const { document: shirt, asset } = retainedImage();
+    const oldHoodie = transferDesign(shirt, 'taller-hoodie-v1');
+    const exported = await exportProject(
+      oldHoodie,
+      { [asset.id]: asset },
+      views,
+    );
+    delete (oldHoodie.zones as Partial<typeof oldHoodie.zones>).pocket;
+    await saveSession(oldHoodie, { [asset.id]: asset });
+    const saved = await loadSession();
+    expect(parseDesignDocument(saved.document).zones.pocket.color).toBe(
+      oldHoodie.zones.front.color,
+    );
+    expect(saved.document!.layers).toEqual(oldHoodie.layers);
+    const zip = await JSZip.loadAsync(await exported.arrayBuffer());
+    zip.file('design.json', JSON.stringify(oldHoodie));
+    vi.stubGlobal(
+      'Image',
+      class {
+        naturalWidth = 1;
+        naturalHeight = 1;
+        onload: (() => void) | null = null;
+        set src(_value: string) {
+          queueMicrotask(() => this.onload?.());
+        }
+      },
+    );
+    const imported = await importProject(
+      new File(
+        [await zip.generateAsync({ type: 'arraybuffer' })],
+        'legacy.zip',
+      ),
+    );
+    expect(imported.document.layers).toEqual(oldHoodie.layers);
+    expect(imported.document.zones.pocket.color).toBe(
+      oldHoodie.zones.front.color,
+    );
+    expect(await imported.assets[asset.id].originalBlob.arrayBuffer()).toEqual(
+      await asset.originalBlob.arrayBuffer(),
+    );
+    for (const record of [
+      asset,
+      saved.assets[asset.id],
+      imported.assets[asset.id],
+    ])
+      URL.revokeObjectURL(record.previewUrl);
+  });
   it('autoguarda las imágenes de zonas conservadas y permite recuperarlas', async () => {
     const { document, asset } = retainedImage();
     await saveSession(document, { [asset.id]: asset });

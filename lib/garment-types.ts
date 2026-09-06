@@ -29,6 +29,7 @@ export const GARMENT_ZONES: Record<ModelId, readonly GarmentZoneId[]> = {
   'taller-hoodie-v1': [
     ...SHIRT_ZONE_IDS.filter((zone) => zone !== 'collar'),
     'hood',
+    'pocket',
     'cuffLeft',
     'cuffRight',
     'waistband',

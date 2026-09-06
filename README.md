@@ -136,12 +136,12 @@ pnpm validate:model
 
 Los recursos nuevos se encuentran en `public/models/garments/`. Para preparar
 solo hoodie y camibuso, ejecuta `node scripts/prepare-garments.mjs`; el proceso
-no modifica la camiseta. Las fuentes, licencias y alternativas a Sketchfab
+no modifica la camiseta. Las fuentes originales de Sketchfab, licencias y modificaciones
 están documentadas en `scripts/model-sources/README.md`.
 
 ```bash
-node scripts/validate-model.mjs public/models/garments/taller-hoodie-v1.glb
-node scripts/validate-model.mjs public/models/garments/taller-camibuso-v1.glb
+node scripts/validate-model.mjs public/models/garments/taller-hoodie-v1-sketchfab.glb
+node scripts/validate-model.mjs public/models/garments/taller-camibuso-v1-sketchfab.glb
 ```
 
 La configuración de Vite/Vinext integra el plugin de Cloudflare. La build se

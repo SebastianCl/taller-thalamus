@@ -1,28 +1,83 @@
 {
-  "triangles": 4940,
+  "sourceSha256": "4e6caffbe391a8aa051b400e3318c76b17996c2ef90b9cde700768cee38add25",
+  "sourceTriangles": 905636,
+  "removedStitchTriangles": 693056,
+  "triangles": 57414,
   "counts": {
-    "front": 888,
-    "sideLeft": 179,
-    "back": 974,
-    "collar": 260,
-    "sleeveLeft": 682,
-    "cuffLeft": 196,
-    "sideRight": 179,
-    "sleeveRight": 682,
-    "cuffRight": 196,
-    "waistband": 704
+    "collar": 1788,
+    "cuffLeft": 1606,
+    "sleeveLeft": 10374,
+    "cuffRight": 1642,
+    "sleeveRight": 10340,
+    "sideRight": 6424,
+    "back": 7759,
+    "sideLeft": 6519,
+    "front": 8208,
+    "waistband": 2754
+  },
+  "optimization": {
+    "collar": {
+      "sourceTriangles": 4592,
+      "triangles": 1788,
+      "error": 0.00099920853972435
+    },
+    "cuffLeft": {
+      "sourceTriangles": 2782,
+      "triangles": 1606,
+      "error": 0.0009994100546464324
+    },
+    "sleeveLeft": {
+      "sourceTriangles": 41500,
+      "triangles": 10374,
+      "error": 0.0005025940481573343
+    },
+    "cuffRight": {
+      "sourceTriangles": 2794,
+      "triangles": 1642,
+      "error": 0.0009919855510815978
+    },
+    "sleeveRight": {
+      "sourceTriangles": 41364,
+      "triangles": 10340,
+      "error": 0.0005586353363469243
+    },
+    "sideRight": {
+      "sourceTriangles": 25702,
+      "triangles": 6424,
+      "error": 0.0004639315593522042
+    },
+    "back": {
+      "sourceTriangles": 31039,
+      "triangles": 7759,
+      "error": 0.000310952978907153
+    },
+    "sideLeft": {
+      "sourceTriangles": 26077,
+      "triangles": 6519,
+      "error": 0.0005174772813916206
+    },
+    "front": {
+      "sourceTriangles": 32832,
+      "triangles": 8208,
+      "error": 0.00032848751288838685
+    },
+    "waistband": {
+      "sourceTriangles": 11020,
+      "triangles": 2754,
+      "error": 0.00039525190368294716
+    }
   },
   "coverage": {
-    "front": 2115677,
-    "sideLeft": 240148,
-    "back": 2065479,
-    "collar": 52896,
-    "sleeveLeft": 513898,
-    "cuffLeft": 111297,
-    "sideRight": 245521,
-    "sleeveRight": 510889,
-    "cuffRight": 108533,
-    "waistband": 394876
+    "collar": 60173,
+    "cuffLeft": 278123,
+    "sleeveLeft": 795275,
+    "cuffRight": 278128,
+    "sleeveRight": 795247,
+    "sideRight": 555822,
+    "back": 2896131,
+    "sideLeft": 549724,
+    "front": 2712563,
+    "waistband": 488851
   },
   "crossZoneOverlaps": 0
 }

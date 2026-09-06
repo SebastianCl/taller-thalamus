@@ -1,7 +1,9 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { deflateSync } from 'node:zlib';
 import { Document, NodeIO } from '@gltf-transform/core';
-import { Vector3 } from 'three';
+import { MeshoptSimplifier } from 'meshoptimizer';
+import { sources, readGarment, projection } from './sketchfab-garments.mjs';
+await MeshoptSimplifier.ready;
 
 // This pipeline deliberately never reads or writes the stable shirt assets.
 const ZONES = [
@@ -39,40 +41,13 @@ const RECTS = {
   sideRight: [0.88, 0.02, 0.1, 0.5],
   sleeveLeft: [0.02, 0.55, 0.2, 0.31],
   sleeveRight: [0.24, 0.55, 0.2, 0.31],
-  hood: [0.46, 0.55, 0.3, 0.31],
+  hood: [0.46, 0.55, 0.3, 0.18],
+  pocket: [0.46, 0.75, 0.3, 0.11],
   collar: [0.78, 0.55, 0.2, 0.07],
   cuffLeft: [0.78, 0.65, 0.09, 0.19],
   cuffRight: [0.89, 0.65, 0.09, 0.19],
   waistband: [0.02, 0.89, 0.96, 0.09],
 };
-const sources = [
-  {
-    id: 'taller-hoodie-v1',
-    file: 'ladieshoodiedown1.obj',
-    label: 'Hoodie',
-    name: 'elvs_hooded_sweat_jacket1',
-    author: 'Elvaerwyn',
-    license: 'CC BY (as declared by the author)',
-    sourceUrl:
-      'https://static.makehumancommunity.org/assets/assetpacks/shirts02.html',
-    height: 6.2516,
-    bottom: -0.3978,
-    centerZ: 0.4,
-  },
-  {
-    id: 'taller-camibuso-v1',
-    file: 'sweater_fisherman.obj',
-    label: 'Camibuso',
-    name: 'toigo_fisherman_sweater',
-    author: 'MargaretToigo',
-    license: 'CC0 1.0',
-    sourceUrl:
-      'https://static.makehumancommunity.org/assets/assetpacks/shirts01.html',
-    height: 5.7783,
-    bottom: 1.1552,
-    centerZ: 0.5,
-  },
-];
 const SIZE = 4096;
 function crc32(buffer) {
   let crc = 0xffffffff;
@@ -112,150 +87,32 @@ function png(mask) {
     chunk('IEND', Buffer.alloc(0)),
   ]);
 }
-function classify([x, y, z], src) {
-  const a = Math.abs(x),
-    side = x >= 0 ? 'Left' : 'Right';
-  if (src.id === 'taller-camibuso-v1') {
-    if (a > 4.4) return `cuff${side}`;
-    if (a > 2.02 || (a > 1.62 && y > 4.6)) return `sleeve${side}`;
-    if (y < 1.68) return 'waistband';
-    if (y > 6.3 && a < 0.92) return 'collar';
-    if (a > 1.48 && y < 5.4) return `side${side}`;
-    return z > 0.24 ? 'front' : 'back';
-  }
-  if (a > 3.84 && y < 2.1) return `cuff${side}`;
-  if (a > 2.05 || (a > 1.55 && y > 2.9 && y < 4.65)) return `sleeve${side}`;
-  if (y < 0.17) return 'waistband';
-  if (y > 4.7 || (y > 4.15 && z < -0.63)) return 'hood';
-  if (a > 1.42 && y < 4.3) return `side${side}`;
-  return z > 0.4 ? 'front' : 'back';
-}
-function projection(p, zone, src) {
-  const [x, y, z] = p;
-  if (zone === 'front') return [x, -y];
-  if (zone === 'back') return [-x, -y];
-  if (zone === 'sideLeft') return [-z, -y];
-  if (zone === 'sideRight') return [z, -y];
-  if (zone === 'hood') return [Math.atan2(x, z - src.centerZ), -y];
-  if (zone === 'collar' || zone === 'waistband')
-    return [Math.atan2(x, z - src.centerZ), -y];
-  // Sleeve axis follows the relaxed arm pose; a cylindrical unwrap exposes its entire circumference.
-  const side = zone.endsWith('Left') ? 1 : -1;
-  const cx = Math.max(
-    1.7,
-    1.7 + (src.id === 'taller-hoodie-v1' ? 4.8 - y : 6.0 - y) * 0.72,
-  );
-  return [
-    Math.atan2(
-      z - (src.id === 'taller-hoodie-v1' ? 0.65 : 0.55),
-      x * side - cx,
-    ),
-    -y,
-  ];
-}
 await mkdir('public/models/garments', { recursive: true });
 const manifests = {};
 for (const src of sources) {
-  const text = await readFile(`scripts/model-sources/${src.file}`, 'utf8');
-  const positions = [];
-  let triangles = [];
-  const uvParents = [];
-  const triangleUvs = [];
-  const findUv = (id) => {
-    while (uvParents[id] !== id) {
-      uvParents[id] = uvParents[uvParents[id]];
-      id = uvParents[id];
-    }
-    return id;
-  };
-  for (const line of text.split(/\r?\n/)) {
-    const t = line.trim().split(/\s+/);
-    if (t[0] === 'v') positions.push(t.slice(1, 4).map(Number));
-    if (t[0] === 'vt') uvParents.push(uvParents.length);
-    if (t[0] === 'f') {
-      const ids = t.slice(1).map((v) => Number(v.split('/')[0]) - 1);
-      const uvIds = t.slice(1).map((v) => Number(v.split('/')[1]) - 1);
-      for (const uvId of uvIds.slice(1))
-        uvParents[findUv(uvId)] = findUv(uvIds[0]);
-      for (let i = 1; i < ids.length - 1; i++) {
-        triangles.push([ids[0], ids[i], ids[i + 1]]);
-        triangleUvs.push(uvIds[0]);
-      }
-    }
-  }
-  const normals = positions.map(() => new Vector3());
+  const {
+    positions,
+    normals,
+    texcoords,
+    triangleZones,
+    removedStitchTriangles,
+    triangles: inputTriangles,
+  } = await readGarment(src);
+  let triangles = inputTriangles;
   const groups = {};
-  for (const ids of triangles) {
-    const p = ids.map((i) => positions[i]);
-    const n = new Vector3()
-      .subVectors(new Vector3(...p[1]), new Vector3(...p[0]))
-      .cross(
-        new Vector3().subVectors(new Vector3(...p[2]), new Vector3(...p[0])),
-      );
-    ids.forEach((i) => normals[i].add(n));
-  }
-  normals.forEach((n) => n.normalize());
-  const islands = new Map();
-  triangles.forEach((ids, i) => {
-    const root = findUv(triangleUvs[i]);
-    const vertices = islands.get(root) ?? [];
-    vertices.push(...ids);
-    islands.set(root, vertices);
-  });
-  const islandZones = new Map();
-  for (const [root, ids] of islands) {
-    const ps = ids.map((i) => positions[i]);
-    const ymin = Math.min(...ps.map((p) => p[1])),
-      ymax = Math.max(...ps.map((p) => p[1]));
-    const xmean = ps.reduce((n, p) => n + p[0], 0) / ps.length,
-      zmean = ps.reduce((n, p) => n + p[2], 0) / ps.length;
-    islandZones.set(
-      root,
-      ymax < 1.7
-        ? 'waistband'
-        : ymin > 6.2
-          ? 'collar'
-          : Math.abs(xmean) > 4.3
-            ? `cuff${xmean > 0 ? 'Left' : 'Right'}`
-            : Math.abs(xmean) > 2.3
-              ? `sleeve${xmean > 0 ? 'Left' : 'Right'}`
-              : zmean > 0.3
-                ? 'front'
-                : 'back',
-    );
-  }
-  // Cut geometry at classification boundaries, interpolating normals. This avoids
-  // sawtooth color edges even on the low-poly source and preserves its silhouette.
-  const planes =
-    src.id === 'taller-hoodie-v1'
-      ? [
-          [0, -3.84],
-          [0, -2.05],
-          [0, -1.55],
-          [0, -1.42],
-          [0, 1.42],
-          [0, 1.55],
-          [0, 2.05],
-          [0, 3.84],
-          [1, 0.17],
-          [1, 2.1],
-          [1, 2.9],
-          [1, 4.15],
-          [1, 4.3],
-          [1, 4.65],
-          [1, 4.7],
-          [2, -0.63],
-          [2, 0.4],
-        ]
-      : [
-          [0, -1.48],
-          [0, 1.48],
-          [1, 5.4],
-        ];
+  const planes = [
+    [0, -src.sideBoundary],
+    [0, src.sideBoundary],
+    [2, src.centerZ],
+  ];
   const output = [];
   triangles.forEach((ids, triangleIndex) => {
     let polygons = [ids];
-    for (const [axis, limit] of planes) {
+    for (const [axis, limit] of ['body', 'front', 'back'].includes(
+      triangleZones[triangleIndex],
+    )
+      ? planes
+      : []) {
       const next = [];
       for (const polygon of polygons) {
         const values = polygon.map((id) => positions[id][axis] - limit);
@@ -278,6 +135,9 @@ for (const src of sources) {
               positions[a].map((v, j) => v + (positions[b][j] - v) * t),
             );
             normals.push(normals[a].clone().lerp(normals[b], t).normalize());
+            texcoords.push(
+              texcoords[a].map((v, j) => v + (texcoords[b][j] - v) * t),
+            );
             halves[0].push(id);
             halves[1].push(id);
           }
@@ -292,15 +152,11 @@ for (const src of sources) {
         const center = [0, 1, 2].map(
           (a) => face.reduce((n, id) => n + positions[id][a], 0) / 3,
         );
-        let zone =
-          src.id === 'taller-hoodie-v1'
-            ? classify(center, src)
-            : islandZones.get(findUv(triangleUvs[triangleIndex]));
+        let zone = triangleZones[triangleIndex];
+        if (zone === 'body') zone = center[2] > src.centerZ ? 'front' : 'back';
         if (
-          src.id === 'taller-camibuso-v1' &&
           ['front', 'back'].includes(zone) &&
-          Math.abs(center[0]) > 1.48 &&
-          center[1] < 5.4
+          Math.abs(center[0]) > src.sideBoundary
         )
           zone = center[0] > 0 ? 'sideLeft' : 'sideRight';
         (groups[zone] ??= []).push(face);
@@ -331,7 +187,13 @@ for (const src of sources) {
       modifications: [
         'Original graphics removed; fabric material replaced',
         'Independent zone UV atlas and 4K mask',
-        'Converted OBJ to indexed GLB; normalized scale',
+        'Source GLB transforms baked; indexed geometry simplified with locked boundaries',
+        'Mirrored sleeves and torso UVs separated; normalized scale',
+        ...(removedStitchTriangles
+          ? [
+              'Sub-pixel stitch tube geometry removed; fabric shell and hems preserved',
+            ]
+          : []),
       ],
     },
     meshes: {},
@@ -340,7 +202,7 @@ for (const src of sources) {
       desktopSize: 2048,
       mobileSize: 1024,
       mask: {
-        url: `/models/garments/${src.id}-mask.png`,
+        url: `/models/garments/${src.id}-sketchfab-mask.png`,
         sourceSize: SIZE,
         torsoSideExpansion: 0,
         colors: {},
@@ -355,17 +217,18 @@ for (const src of sources) {
       right: { rotationY: (Math.PI * 65) / 180, label: 'Lado derecho' },
     },
   };
-  const counts = {};
+  const counts = {},
+    optimization = {};
   for (const [zone, faces] of Object.entries(groups)) {
     const rectArray = RECTS[zone];
     if (!rectArray) throw Error(`Missing atlas rect: ${zone}`);
     const [rx, ry, rw, rh] = rectArray;
     const rect = { x: rx, y: ry, width: rw, height: rh };
     const projected = faces.map((ids) =>
-      ids.map((i) => projection(positions[i], zone, src)),
+      ids.map((i) => projection(positions[i], zone, src, texcoords[i])),
     );
     // Unwrap triangles that cross the cylindrical seam without stretching across the atlas.
-    if (!['front', 'back', 'sideLeft', 'sideRight'].includes(zone))
+    if (zone === 'waistband')
       for (const points of projected) {
         const xs = points.map((p) => p[0]);
         if (Math.max(...xs) - Math.min(...xs) > Math.PI)
@@ -374,8 +237,12 @@ for (const src of sources) {
           });
       }
     const all = projected.flat();
-    const min = [0, 1].map((a) => Math.min(...all.map((p) => p[a])));
-    const max = [0, 1].map((a) => Math.max(...all.map((p) => p[a])));
+    const min = [0, 1].map((a) =>
+      all.reduce((n, p) => Math.min(n, p[a]), Infinity),
+    );
+    const max = [0, 1].map((a) =>
+      all.reduce((n, p) => Math.max(n, p[a]), -Infinity),
+    );
     const pos = [],
       norm = [],
       uv = [],
@@ -428,6 +295,36 @@ for (const src of sources) {
           mask[pixel] = code;
         }
     });
+    const [reduced, error] = MeshoptSimplifier.simplifyWithAttributes(
+      new Uint32Array(indices),
+      new Float32Array(pos),
+      3,
+      new Float32Array(uv),
+      2,
+      [0.2, 0.2],
+      null,
+      Math.max(12, Math.floor((indices.length * 0.25) / 3) * 3),
+      0.001,
+      ['LockBorder'],
+    );
+    const remap = new Map(),
+      finalPos = [],
+      finalNorm = [],
+      finalUv = [];
+    const finalIndices = Array.from(reduced, (id) => {
+      if (!remap.has(id)) {
+        remap.set(id, remap.size);
+        finalPos.push(...pos.slice(id * 3, id * 3 + 3));
+        finalNorm.push(...norm.slice(id * 3, id * 3 + 3));
+        finalUv.push(...uv.slice(id * 2, id * 2 + 2));
+      }
+      return remap.get(id);
+    });
+    optimization[zone] = {
+      sourceTriangles: faces.length,
+      triangles: finalIndices.length / 3,
+      error,
+    };
     const accessor = (name, array, type) =>
       document
         .createAccessor(name)
@@ -438,14 +335,17 @@ for (const src of sources) {
       .createPrimitive()
       .setAttribute(
         'POSITION',
-        accessor('position', new Float32Array(pos), 'VEC3'),
+        accessor('position', new Float32Array(finalPos), 'VEC3'),
       )
       .setAttribute(
         'NORMAL',
-        accessor('normal', new Float32Array(norm), 'VEC3'),
+        accessor('normal', new Float32Array(finalNorm), 'VEC3'),
       )
-      .setAttribute('TEXCOORD_0', accessor('uv', new Float32Array(uv), 'VEC2'))
-      .setIndices(accessor('index', new Uint32Array(indices), 'SCALAR'))
+      .setAttribute(
+        'TEXCOORD_0',
+        accessor('uv', new Float32Array(finalUv), 'VEC2'),
+      )
+      .setIndices(accessor('index', new Uint32Array(finalIndices), 'SCALAR'))
       .setMaterial(material);
     scene.addChild(
       document
@@ -465,7 +365,7 @@ for (const src of sources) {
         [0.08, 0.92],
       ],
     };
-    counts[zone] = faces.length;
+    counts[zone] = finalIndices.length / 3;
   }
   if (crossZoneOverlaps) throw Error(`${src.id}: overlapping zones`);
   const coverage = Object.fromEntries(
@@ -476,13 +376,28 @@ for (const src of sources) {
   );
   if (Object.values(coverage).some((n) => n === 0))
     throw Error('Empty UV zone');
-  await new NodeIO().write(`public/models/garments/${src.id}.glb`, document);
-  await writeFile(`public/models/garments/${src.id}-mask.png`, png(mask));
+  await new NodeIO().write(
+    `public/models/garments/${src.id}-sketchfab.glb`,
+    document,
+  );
+  await writeFile(
+    `public/models/garments/${src.id}-sketchfab-mask.png`,
+    png(mask),
+  );
   manifests[src.id] = manifest;
   await writeFile(
     `public/models/garments/${src.id}-audit.json`,
     JSON.stringify(
-      { triangles: triangles.length, counts, coverage, crossZoneOverlaps },
+      {
+        sourceSha256: src.sha256,
+        sourceTriangles: inputTriangles.length + removedStitchTriangles,
+        removedStitchTriangles,
+        triangles: Object.values(counts).reduce((a, b) => a + b, 0),
+        counts,
+        optimization,
+        coverage,
+        crossZoneOverlaps,
+      },
       null,
       2,
     ),
