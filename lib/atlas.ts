@@ -1,6 +1,7 @@
 import type { AssetRecord } from '@/lib/persistence';
+import { ALL_ZONE_IDS } from '@/lib/garment-types';
 import { ZONE_IDS, type DesignDocument, type DesignLayer, type ZoneId, type ZoneStyle } from '@/lib/design';
-import { MODEL_MANIFEST } from '@/lib/model-manifest';
+import { MODEL_MANIFEST, type ModelManifest } from '@/lib/model-manifest';
 import { ZONE_MASK_CODE, uvMaskGutter, type UvZoneMaskLookup } from '@/lib/uv-zone-mask';
 
 export const PATTERNS = [
@@ -48,15 +49,15 @@ function toPixelCoverageRect(rect: { x: number; y: number; width: number; height
   return { x, y, width: right - x, height: bottom - y };
 }
 
-function pixelRects(zone: ZoneId, size: number, zoneMask?: UvZoneMaskLookup | null): PixelRect[] {
-  const config = MODEL_MANIFEST.atlas.zones[zone];
+function pixelRects(zone: ZoneId, size: number, zoneMask?: UvZoneMaskLookup | null, manifest = MODEL_MANIFEST): PixelRect[] {
+  const config = manifest.atlas.zones[zone];
   const runtimeRects = zoneMask?.rects?.[zone];
   const rects = runtimeRects?.length ? runtimeRects : [config.rect, ...(config.secondaryRects ?? [])];
   return rects.map((rect) => toPixelRect(rect, size));
 }
 
-function maskPixelRects(zone: ZoneId, size: number, padding = 0): PixelRect[] {
-  return MODEL_MANIFEST.atlas.mask.rects[zone].map((rect) => toPixelCoverageRect(rect, size, padding));
+function maskPixelRects(zone: ZoneId, size: number, padding = 0, manifest = MODEL_MANIFEST): PixelRect[] {
+  return manifest.atlas.mask.rects[zone].map((rect) => toPixelCoverageRect(rect, size, padding));
 }
 
 const maskPaths = new WeakMap<UvZoneMaskLookup, Record<ZoneId, Path2D>>();
@@ -65,8 +66,8 @@ function maskPathsFor(mask: UvZoneMaskLookup) {
   const cached = maskPaths.get(mask);
   if (cached) return cached;
 
-  const paths = Object.fromEntries(ZONE_IDS.map((zone) => [zone, new Path2D()])) as Record<ZoneId, Path2D>;
-  const zoneByCode = Object.fromEntries(ZONE_IDS.map((zone) => [ZONE_MASK_CODE[zone], zone])) as Record<number, ZoneId>;
+  const paths = Object.fromEntries(ALL_ZONE_IDS.map((zone) => [zone, new Path2D()])) as Record<ZoneId, Path2D>;
+  const zoneByCode = Object.fromEntries(ALL_ZONE_IDS.map((zone) => [ZONE_MASK_CODE[zone], zone])) as Record<number, ZoneId>;
   for (let y = 0; y < mask.height; y += 1) {
     let x = 0;
     while (x < mask.width) {
@@ -319,20 +320,22 @@ export function renderAtlas(
   images: Record<string, HTMLImageElement>,
   selectedLayerId?: string | null,
   zoneMask?: UvZoneMaskLookup | null,
+  manifest: ModelManifest = MODEL_MANIFEST,
 ) {
   const context = canvas.getContext('2d', { alpha: false });
   if (!context) return;
   const size = canvas.width;
+  const activeZones = manifest === MODEL_MANIFEST ? ZONE_IDS : Object.keys(manifest.atlas.zones) as ZoneId[];
   context.fillStyle = '#dfe5ec';
   context.fillRect(0, 0, size, size);
 
   const drawZone = (target: CanvasRenderingContext2D, zone: ZoneId, exactBounds = false) => {
-    const logicalRects = pixelRects(zone, size, exactBounds ? zoneMask : null);
-    const isSide = zone === 'sideLeft' || zone === 'sideRight';
+    const logicalRects = pixelRects(zone, size, exactBounds ? zoneMask : null, manifest);
+    const isSide = manifest.modelId === 'taller-sport-v1' && (zone === 'sideLeft' || zone === 'sideRight');
     const baseRects = exactBounds && isSide
-      ? [...pixelRects('front', size), ...pixelRects('back', size)]
+      ? [...pixelRects('front', size, null, manifest), ...pixelRects('back', size, null, manifest)]
       : exactBounds
-        ? maskPixelRects(zone, size, uvMaskGutter(size))
+        ? maskPixelRects(zone, size, uvMaskGutter(size), manifest)
         : logicalRects;
     for (const rect of baseRects) {
       drawZoneBase(target, rect, document.zones[zone]);
@@ -342,18 +345,18 @@ export function renderAtlas(
       const layers = document.layers.filter((layer) => layer.zone === zone).sort((a, b) => a.order - b.order);
       for (const layer of layers) {
         const image = layer.type === 'image' ? images[assets[layer.assetId]?.id] : undefined;
-        drawLayer(target, rect, layer, image, selectedLayerId === layer.id, MODEL_MANIFEST.atlas.zones[zone].safePolygon);
+        drawLayer(target, rect, layer, image, selectedLayerId === layer.id, manifest.atlas.zones[zone].safePolygon);
       }
     }
   };
 
   if (!zoneMask || zoneMask.width !== size || zoneMask.height !== size) {
-    for (const zone of ZONE_IDS) drawZone(context, zone);
+    for (const zone of activeZones) drawZone(context, zone);
     return;
   }
 
   const paths = maskPathsFor(zoneMask);
-  for (const zone of ZONE_IDS) {
+  for (const zone of activeZones) {
     context.save();
     context.clip(paths[zone]);
     context.fillStyle = document.zones[zone].color;

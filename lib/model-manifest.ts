@@ -1,10 +1,11 @@
 import type { ViewId, ZoneId } from '@/lib/design';
+import type { ModelId } from '@/lib/garment-types';
 
 export type NormalizedRect = { x: number; y: number; width: number; height: number };
 
 export type ModelManifest = {
   version: 1;
-  modelId: 'taller-sport-v1';
+  modelId: ModelId;
   source: {
     kind: 'licensed-glb';
     name: string;
@@ -66,7 +67,7 @@ const FRONT_TORSO_MASK: NormalizedRect = { x: 0.56689453125, y: 0.400634765625, 
 const BACK_TORSO_MASK: NormalizedRect = { x: 0.013671875, y: 0.381103515625, width: 0.43017578125, height: 0.575439453125 };
 const SIDE_PREVIEW_ANGLE = Math.PI * (65 / 180);
 
-export const MODEL_MANIFEST: ModelManifest = {
+export const MODEL_MANIFEST = {
   version: 1,
   modelId: 'taller-sport-v1',
   source: {
@@ -159,10 +160,10 @@ export const MODEL_MANIFEST: ModelManifest = {
     left: { rotationY: -SIDE_PREVIEW_ANGLE, label: 'Lado izquierdo' },
     right: { rotationY: SIDE_PREVIEW_ANGLE, label: 'Lado derecho' },
   },
-};
+} as ModelManifest;
 
-export function localPointFromAtlasUv(zone: ZoneId, u: number, v: number, runtimeRects?: NormalizedRect[]) {
-  const config = MODEL_MANIFEST.atlas.zones[zone];
+export function localPointFromAtlasUv(zone: ZoneId, u: number, v: number, runtimeRects?: NormalizedRect[], manifest = MODEL_MANIFEST) {
+  const config = manifest.atlas.zones[zone];
   const rects = runtimeRects?.length ? runtimeRects : [config.rect, ...(config.secondaryRects ?? [])];
   const rect = rects.find((candidate) => u >= candidate.x && u <= candidate.x + candidate.width && v >= candidate.y && v <= candidate.y + candidate.height)
     ?? rects.reduce((nearest, candidate) => {
@@ -181,17 +182,18 @@ export function localPointFromAtlasUv(zone: ZoneId, u: number, v: number, runtim
 
 const inside = (rect: NormalizedRect, u: number, v: number) => u >= rect.x && u <= rect.x + rect.width && v >= rect.y && v <= rect.y + rect.height;
 
-export function zoneFromAtlasUv(u: number, v: number): ZoneId | null {
+export function zoneFromAtlasUv(u: number, v: number, manifest = MODEL_MANIFEST): ZoneId | null {
   // Narrow seam/collar patches and side masks must win over the larger torso islands.
-  for (const zone of ['collar', 'sideLeft', 'sideRight', 'sleeveLeft', 'sleeveRight', 'front', 'back'] as ZoneId[]) {
-    const config = MODEL_MANIFEST.atlas.zones[zone];
+  for (const zone of ['hood', 'pocket', 'cuffLeft', 'cuffRight', 'waistband', 'collar', 'sideLeft', 'sideRight', 'sleeveLeft', 'sleeveRight', 'front', 'back'] as ZoneId[]) {
+    const config = manifest.atlas.zones[zone];
+    if (!config) continue;
     if ([config.rect, ...(config.secondaryRects ?? [])].some((rect) => inside(rect, u, v))) return zone;
   }
   return null;
 }
 
-export function clampToSafeZone(zone: ZoneId, x: number, y: number) {
-  const polygon = MODEL_MANIFEST.atlas.zones[zone].safePolygon;
+export function clampToSafeZone(zone: ZoneId, x: number, y: number, manifest = MODEL_MANIFEST) {
+  const polygon = manifest.atlas.zones[zone].safePolygon;
   const point = { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) };
   let insidePolygon = false;
   for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index, index += 1) {

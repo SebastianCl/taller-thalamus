@@ -1,3 +1,5 @@
+import { GARMENT_ZONES, type GarmentZoneId, type ModelId } from '@/lib/garment-types';
+
 export const ZONE_IDS = [
   'front',
   'back',
@@ -8,8 +10,9 @@ export const ZONE_IDS = [
   'sideRight',
 ] as const;
 
-export type ZoneId = (typeof ZONE_IDS)[number];
+export type ZoneId = GarmentZoneId;
 export type ToolId =
+  | 'type'
   | 'design'
   | 'color'
   | 'pattern'
@@ -66,9 +69,9 @@ export type TextLayer = BaseLayer & {
 export type DesignLayer = ImageLayer | TextLayer;
 
 export type DesignDocument = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
-  modelId: 'taller-sport-v1';
+  modelId: ModelId;
   templateId: string;
   zones: Record<ZoneId, ZoneStyle>;
   layers: DesignLayer[];
@@ -83,6 +86,11 @@ export const ZONE_LABELS: Record<ZoneId, string> = {
   collar: 'Cuello',
   sideLeft: 'Lateral izquierdo',
   sideRight: 'Lateral derecho',
+  hood: 'Capucha',
+  pocket: 'Bolsillo',
+  cuffLeft: 'Puño izquierdo',
+  cuffRight: 'Puño derecho',
+  waistband: 'Pretina',
 };
 
 export const PALETTE = [
@@ -103,12 +111,12 @@ const baseZone = (color = '#F7F8FA'): ZoneStyle => ({
   gradient: null,
 });
 
-export const createDocument = (): DesignDocument => ({
-  schemaVersion: 1,
+export const createDocument = (modelId: ModelId = 'taller-sport-v1'): DesignDocument => ({
+  schemaVersion: 2,
   id: crypto.randomUUID(),
-  modelId: 'taller-sport-v1',
+  modelId,
   templateId: 'blank',
-  zones: Object.fromEntries(ZONE_IDS.map((zone) => [zone, baseZone()])) as Record<ZoneId, ZoneStyle>,
+  zones: Object.fromEntries(GARMENT_ZONES[modelId].map((zone) => [zone, baseZone()])) as Record<ZoneId, ZoneStyle>,
   layers: [],
   modifiedAt: new Date().toISOString(),
 });

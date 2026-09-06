@@ -1,0 +1,90 @@
+{
+  "sourceSha256": "249be85dc3fe1dfc47640383e4bc79c1e43b6e1748db41e8c273201a01dc4ff9",
+  "sourceTriangles": 375606,
+  "removedStitchTriangles": 0,
+  "triangles": 110832,
+  "counts": {
+    "waistband": 3410,
+    "pocket": 6014,
+    "hood": 19412,
+    "cuffRight": 4418,
+    "cuffLeft": 4714,
+    "sleeveRight": 12396,
+    "sleeveLeft": 11656,
+    "back": 17984,
+    "sideRight": 8154,
+    "sideLeft": 7318,
+    "front": 15356
+  },
+  "optimization": {
+    "waistband": {
+      "sourceTriangles": 13642,
+      "triangles": 3410,
+      "error": 0.000827730109449476
+    },
+    "pocket": {
+      "sourceTriangles": 19108,
+      "triangles": 6014,
+      "error": 0.0009937463328242302
+    },
+    "hood": {
+      "sourceTriangles": 64144,
+      "triangles": 19412,
+      "error": 0.0009961978066712618
+    },
+    "cuffRight": {
+      "sourceTriangles": 6772,
+      "triangles": 4418,
+      "error": 0.0009995935251936316
+    },
+    "cuffLeft": {
+      "sourceTriangles": 6738,
+      "triangles": 4714,
+      "error": 0.0009970135288313031
+    },
+    "sleeveRight": {
+      "sourceTriangles": 46690,
+      "triangles": 12396,
+      "error": 0.0009763619164004922
+    },
+    "sleeveLeft": {
+      "sourceTriangles": 46624,
+      "triangles": 11656,
+      "error": 0.0009898401331156492
+    },
+    "back": {
+      "sourceTriangles": 71942,
+      "triangles": 17984,
+      "error": 0.00042883818969130516
+    },
+    "sideRight": {
+      "sourceTriangles": 25022,
+      "triangles": 8154,
+      "error": 0.0009762395056895912
+    },
+    "sideLeft": {
+      "sourceTriangles": 22346,
+      "triangles": 7318,
+      "error": 0.0009963158518075943
+    },
+    "front": {
+      "sourceTriangles": 61430,
+      "triangles": 15356,
+      "error": 0.0007748393691144884
+    }
+  },
+  "coverage": {
+    "waistband": 1012780,
+    "pocket": 441867,
+    "hood": 809963,
+    "cuffRight": 287451,
+    "cuffLeft": 287451,
+    "sleeveRight": 867234,
+    "sleeveLeft": 867248,
+    "back": 2816949,
+    "sideRight": 367377,
+    "sideLeft": 360140,
+    "front": 2763279
+  },
+  "crossZoneOverlaps": 0
+}

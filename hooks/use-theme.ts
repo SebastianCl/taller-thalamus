@@ -27,6 +27,7 @@ export function useTheme() {
     } catch {
       // Private browsing modes may deny access to localStorage.
     }
+    // oxlint-disable-next-line react/react-compiler -- Hydrate the browser-only preference after the server's light-theme markup.
     setTheme(storedTheme);
     applyTheme(storedTheme);
   }, []);

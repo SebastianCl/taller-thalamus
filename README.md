@@ -1,7 +1,7 @@
 # Taller 3D
 
-Configurador web de camisetas en 3D. Permite personalizar colores, textos,
-imágenes y capas sobre un modelo de camiseta, conservar el trabajo en el
+Configurador web de prendas en 3D: camiseta, hoodie y camibuso de manga larga
+y cuello redondo. Permite personalizar colores, textos, imágenes y capas, conservar el trabajo en el
 navegador e importar o exportar proyectos completos.
 
 ## Funcionalidades
@@ -17,6 +17,11 @@ navegador e importar o exportar proyectos completos.
 - Máscara UV generada para aplicar materiales por zona.
 - Fallback procedural si el modelo GLB no puede cargarse.
 - Interfaz adaptable para escritorio y dispositivos móviles.
+- Selector de prenda con transferencia del diseño y deshacer/rehacer.
+- Capucha, puños y pretina editables cuando existen en el modelo.
+- Zonas ausentes conservadas en el proyecto; sus capas reaparecen al volver
+  a una prenda compatible y siguen contando dentro del límite de 20 elementos.
+- Documentos versión 2 con migración automática desde las versiones 0 y 1.
 
 ## Requisitos
 
@@ -63,6 +68,13 @@ pnpm test
 ```
 
 ## Uso del editor
+
+La herramienta **Tipo** permite cambiar entre Camiseta, Hoodie y Camibuso.
+Colores y capas se transfieren mediante posiciones relativas. Las zonas nuevas
+usan el color del frente; las que ya tienen un diseño conservado lo recuperan.
+**Nuevo diseño** mantiene la prenda elegida y limpia todas las capas y zonas.
+La exportación espera a que el visor esté listo e incluye los créditos del
+modelo activo, además de las capas de zonas temporalmente ausentes.
 
 1. Elige una herramienta en la barra lateral: color, texto, imagen o capas.
 2. Selecciona una zona de la camiseta en el visor 3D.
@@ -122,6 +134,16 @@ pnpm validate:model
 
 ## Despliegue
 
+Los recursos nuevos se encuentran en `public/models/garments/`. Para preparar
+solo hoodie y camibuso, ejecuta `node scripts/prepare-garments.mjs`; el proceso
+no modifica la camiseta. Las fuentes originales de Sketchfab, licencias y modificaciones
+están documentadas en `scripts/model-sources/README.md`.
+
+```bash
+node scripts/validate-model.mjs public/models/garments/taller-hoodie-v1-sketchfab.glb
+node scripts/validate-model.mjs public/models/garments/taller-camibuso-v1-sketchfab.glb
+```
+
 La configuración de Vite/Vinext integra el plugin de Cloudflare. La build se
 puede probar localmente con:
 
@@ -142,4 +164,3 @@ por Git.
 - Mantener la lógica de persistencia, validación y serialización dentro de
   `lib/`.
 - No versionar `dist/`, `.next/`, `.wrangler/` ni `graphify-out/`.
-

@@ -5,7 +5,6 @@ import type { AssetRecord } from '@/lib/persistence';
 import {
   createDocument,
   TEMPLATES,
-  ZONE_IDS,
   type DesignDocument,
   type LayerTransform,
   type TextLayer,
@@ -14,6 +13,8 @@ import {
   type ZoneId,
   type ZoneStyle,
 } from '@/lib/design';
+import { getGarment, transferDesign, activeZone } from '@/lib/garments';
+import { GARMENT_ZONES, supportsZone, type ModelId } from '@/lib/garment-types';
 import { clampToSafeZone } from '@/lib/model-manifest';
 
 type LayerPatch = {
@@ -44,6 +45,10 @@ type EditorState = {
   interactionMode: 'move' | 'rotate';
   autosaveStatus: 'loading' | 'saved' | 'saving' | 'error';
   exportStatus: 'idle' | 'working';
+  stageModelId: ModelId | null;
+  stageStatus: 'loading' | 'ready' | 'error';
+  setStageStatus: (modelId: ModelId, status: 'loading' | 'ready' | 'error') => void;
+  changeGarment: (modelId: ModelId) => void;
   setActiveTool: (tool: ToolId) => void;
   setSelectedZone: (zone: ZoneId) => void;
   selectLayer: (id: string | null) => void;
@@ -83,18 +88,18 @@ const baseStyle = () => createDocument().zones.front;
 
 function resetTemplate(document: DesignDocument, templateId: string) {
   document.templateId = templateId;
-  for (const zone of ZONE_IDS) document.zones[zone] = structuredClone(baseStyle());
+  for (const zone of GARMENT_ZONES[document.modelId]) document.zones[zone] = structuredClone(baseStyle());
   const template = TEMPLATES.find((item) => item.id === templateId);
   if (template) {
     const apply = template.apply as Partial<Record<ZoneId, string>>;
     for (const zone of Object.keys(template.apply) as ZoneId[]) {
-      document.zones[zone].color = apply[zone] ?? document.zones[zone].color;
+      if (supportsZone(document.modelId, zone)) document.zones[zone].color = apply[zone] ?? document.zones[zone].color;
     }
   }
   if (templateId === 'duotone') {
     document.zones.sideLeft.color = '#071A2F';
     document.zones.sideRight.color = '#071A2F';
-    document.zones.collar.color = '#00A7C4';
+    if (supportsZone(document.modelId, 'collar')) document.zones.collar.color = '#00A7C4';
   }
   if (templateId === 'shoulders') {
     document.zones.front.gradient = { from: '#E8EDF4', to: '#CBD8E8', angle: 90, offset: -0.15 };
@@ -126,11 +131,11 @@ function commit(state: EditorState, change: (document: DesignDocument) => void) 
 
 function patchLayer(document: DesignDocument, id: string, patch: LayerPatch) {
   const layer = document.layers.find((item) => item.id === id);
-  if (!layer) return;
+  if (!layer || !supportsZone(document.modelId, layer.zone) || !supportsZone(document.modelId, patch.zone ?? layer.zone)) return;
   const zone = patch.zone ?? layer.zone;
   if (patch.transform) {
     const transform = { ...layer.transform, ...patch.transform };
-    const point = clampToSafeZone(zone, transform.x, transform.y);
+    const point = clampToSafeZone(zone, transform.x, transform.y, getGarment(document.modelId).manifest);
     layer.transform = {
       ...transform,
       ...point,
@@ -138,7 +143,7 @@ function patchLayer(document: DesignDocument, id: string, patch: LayerPatch) {
       rotation: Math.max(-3600, Math.min(3600, transform.rotation)),
     };
   } else if (patch.zone) {
-    const point = clampToSafeZone(zone, layer.transform.x, layer.transform.y);
+    const point = clampToSafeZone(zone, layer.transform.x, layer.transform.y, getGarment(document.modelId).manifest);
     layer.transform = { ...layer.transform, ...point };
   }
   const { transform: _transform, ...rest } = patch;
@@ -159,23 +164,45 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   interactionMode: 'rotate',
   autosaveStatus: 'loading',
   exportStatus: 'idle',
+  stageModelId: null,
+  stageStatus: 'loading',
+  setStageStatus: (modelId, status) => set((state) => {
+    if (state.document.modelId !== modelId) return {};
+    // A failed/lost renderer must explicitly restart before it can become ready.
+    if (state.stageStatus === 'error' && status === 'ready') return {};
+    return { stageModelId: modelId, stageStatus: status };
+  }),
+  changeGarment: (modelId) => {
+    const state = get();
+    if (state.document.modelId === modelId || state.exportStatus === 'working') return;
+    state.endGesture();
+    set((current) => ({
+      ...commit(current, (document) => Object.assign(document, transferDesign(document, modelId))),
+      selectedZone: supportsZone(modelId, current.selectedZone) ? current.selectedZone : 'front',
+      selectedLayerId: null, gestureStart: null, stageModelId: null, stageStatus: 'loading',
+    }));
+  },
   setActiveTool: (activeTool) => set({ activeTool }),
-  setSelectedZone: (selectedZone) => set({ selectedZone }),
-  selectLayer: (selectedLayerId) => set({ selectedLayerId }),
+  setSelectedZone: (selectedZone) => { if (supportsZone(get().document.modelId, selectedZone)) set({ selectedZone }); },
+  selectLayer: (selectedLayerId) => {
+    const state = get();
+    if (!selectedLayerId || state.document.layers.some((layer) => layer.id === selectedLayerId && supportsZone(state.document.modelId, layer.zone))) set({ selectedLayerId });
+  },
   setView: (view) => set({ view }),
   setInteractionMode: (interactionMode) => set({ interactionMode }),
   setAutosaveStatus: (autosaveStatus) => set({ autosaveStatus }),
   setExportStatus: (exportStatus) => set({ exportStatus }),
-  hydrate: (document, assets) => set({ document, assets, past: [], future: [], autosaveStatus: 'saved' }),
+  hydrate: (document, assets) => set({ document, assets, past: [], future: [], selectedZone: 'front', selectedLayerId: null, gestureStart: null, stageModelId: null, stageStatus: 'loading', autosaveStatus: 'saved' }),
   newDesign: () => {
     for (const asset of Object.values(get().assets)) URL.revokeObjectURL(asset.previewUrl);
-    set({ document: createDocument(), assets: {}, past: [], future: [], selectedLayerId: null, selectedZone: 'front', activeTool: 'color' });
+    set({ document: createDocument(get().document.modelId), assets: {}, past: [], future: [], selectedLayerId: null, selectedZone: 'front', activeTool: 'color' });
   },
   applyTemplate: (templateId) => {
     if (!TEMPLATES.some((template) => template.id === templateId)) return;
     set((state) => commit(state, (document) => resetTemplate(document, templateId)));
   },
   updateZoneStyle: (zone, patch, history = true) => set((state) => {
+    if (!supportsZone(state.document.modelId, zone)) return state;
     if (history) return commit(state, (document) => {
       document.zones[zone] = { ...document.zones[zone], ...patch };
     });
@@ -184,20 +211,21 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return { document: stamp(document) };
   }),
   setZoneColor: (zone, color) => {
+    if (!supportsZone(get().document.modelId, zone)) return;
     if (get().document.zones[zone].color === color) return;
     get().updateZoneStyle(zone, { color });
   },
   setAllZoneColors: (color) => {
-    if (ZONE_IDS.every((zone) => get().document.zones[zone].color === color)) return;
+    if (GARMENT_ZONES[get().document.modelId].every((zone) => get().document.zones[zone].color === color)) return;
     set((state) => commit(state, (document) => {
-      for (const zone of ZONE_IDS) {
+      for (const zone of GARMENT_ZONES[document.modelId]) {
         document.zones[zone] = { ...document.zones[zone], color };
       }
     }));
   },
   addTextLayer: (subtype, text, font = 'Inter') => {
     const state = get();
-    if (state.document.layers.length >= 20 || !text.trim()) return null;
+    if (state.document.layers.length >= 20 || !text.trim() || !supportsZone(state.document.modelId, state.selectedZone)) return null;
     const id = crypto.randomUUID();
     set((current) => commit(current, (document) => {
       document.layers.push({
@@ -220,7 +248,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
   addImageLayer: (asset) => {
     const state = get();
-    if (state.document.layers.length >= 20) return null;
+    if (state.document.layers.length >= 20 || !supportsZone(state.document.modelId, state.selectedZone)) return null;
     const id = crypto.randomUUID();
     set((current) => ({
       ...commit(current, (document) => {
@@ -245,7 +273,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
   updateLayer: (id, patch, history = true) => set((state) => {
     const layer = state.document.layers.find((item) => item.id === id);
-    if (!layer || layer.locked) return state;
+    if (!layer || layer.locked || !supportsZone(state.document.modelId, layer.zone)) return state;
     if (!history) {
       const document = structuredClone(state.document);
       patchLayer(document, id, patch);
@@ -256,12 +284,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   duplicateLayer: (id) => set((state) => {
     if (state.document.layers.length >= 20) return state;
     const source = state.document.layers.find((layer) => layer.id === id);
-    if (!source) return state;
+    if (!source || !supportsZone(state.document.modelId, source.zone)) return state;
     const clone = structuredClone(source);
     clone.id = crypto.randomUUID();
     clone.order = state.document.layers.length;
     clone.locked = false;
-    const point = clampToSafeZone(clone.zone, clone.transform.x + 0.05, clone.transform.y + 0.05);
+    const point = clampToSafeZone(clone.zone, clone.transform.x + 0.05, clone.transform.y + 0.05, getGarment(state.document.modelId).manifest);
     clone.transform.x = point.x;
     clone.transform.y = point.y;
     const result = commit(state, (document) => document.layers.push(clone));
@@ -276,7 +304,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   })),
   toggleLayer: (id, property) => set((state) => commit(state, (document) => {
     const layer = document.layers.find((item) => item.id === id);
-    if (layer) layer[property] = !layer[property];
+    if (layer && supportsZone(document.modelId, layer.zone)) layer[property] = !layer[property];
   })),
   moveLayerOrder: (id, direction) => set((state) => commit(state, (document) => {
     const ordered = [...document.layers].sort((a, b) => a.order - b.order);
@@ -289,14 +317,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   })),
   centerLayer: (id) => set((state) => {
     const layer = state.document.layers.find((item) => item.id === id);
-    if (!layer || layer.locked) return state;
+    if (!layer || layer.locked || !supportsZone(state.document.modelId, layer.zone)) return state;
     return commit(state, (document) => patchLayer(document, id, { transform: { x: 0.5, y: 0.5 } }));
   }),
   beginGesture: () => set((state) => ({ gestureStart: state.gestureStart ?? structuredClone(state.document) })),
   updateLayerLive: (id, x, y) => set((state) => {
     const layer = state.document.layers.find((item) => item.id === id);
-    if (!layer || layer.locked) return state;
-    const point = clampToSafeZone(layer.zone, x, y);
+    if (!layer || layer.locked || !supportsZone(state.document.modelId, layer.zone)) return state;
+    const point = clampToSafeZone(layer.zone, x, y, getGarment(state.document.modelId).manifest);
     if (point.x === layer.transform.x && point.y === layer.transform.y) return state;
     const document = structuredClone(state.document);
     patchLayer(document, id, { transform: point });
@@ -304,7 +332,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
   updateLayerResizeLive: (id, scale, x, y) => set((state) => {
     const layer = state.document.layers.find((item) => item.id === id);
-    if (!layer || layer.locked) return state;
+    if (!layer || layer.locked || !supportsZone(state.document.modelId, layer.zone)) return state;
     const nextScale = Math.max(0.1, Math.min(4, scale));
     if (layer.transform.scale === nextScale && layer.transform.x === x && layer.transform.y === y) return state;
     const document = structuredClone(state.document);
@@ -320,16 +348,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   }),
   replaceImportedDesign: (document, assets) => {
     for (const asset of Object.values(get().assets)) URL.revokeObjectURL(asset.previewUrl);
-    set({ document, assets, past: [], future: [], selectedLayerId: null, autosaveStatus: 'saving' });
+    set({ document, assets, past: [], future: [], selectedZone: 'front', selectedLayerId: null, gestureStart: null, stageModelId: null, stageStatus: 'loading', autosaveStatus: 'saving' });
   },
   undo: () => set((state) => {
     const previous = state.past.at(-1);
-    if (!previous) return state;
-    return { document: previous, past: state.past.slice(0, -1), future: [state.document, ...state.future].slice(0, 50), selectedLayerId: null };
+    if (!previous || state.exportStatus === 'working') return state;
+    return { selectedZone: activeZone(previous, state.selectedZone), stageModelId: previous.modelId === state.document.modelId ? state.stageModelId : null, stageStatus: previous.modelId === state.document.modelId ? state.stageStatus : 'loading', gestureStart: null, document: previous, past: state.past.slice(0, -1), future: [state.document, ...state.future].slice(0, 50), selectedLayerId: null };
   }),
   redo: () => set((state) => {
     const next = state.future[0];
-    if (!next) return state;
-    return { document: next, past: [...state.past, state.document].slice(-50), future: state.future.slice(1), selectedLayerId: null };
+    if (!next || state.exportStatus === 'working') return state;
+    return { selectedZone: activeZone(next, state.selectedZone), stageModelId: next.modelId === state.document.modelId ? state.stageModelId : null, stageStatus: next.modelId === state.document.modelId ? state.stageStatus : 'loading', gestureStart: null, document: next, past: [...state.past, state.document].slice(-50), future: state.future.slice(1), selectedLayerId: null };
   }),
 }));
