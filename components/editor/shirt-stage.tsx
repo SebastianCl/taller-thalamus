@@ -6,7 +6,7 @@ import { ContactShadows, OrbitControls, useGLTF, useProgress } from '@react-thre
 import { Canvas, type ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { Component, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react';
 import * as THREE from 'three';
-import { Box, MousePointer2, Rotate3D, Home, Shirt, ZoomIn, ZoomOut } from 'lucide-react';
+import { Box, MousePointer2, Rotate3D, Home, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -629,7 +629,7 @@ export function ShirtStage() {
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Restablecer vista" onClick={() => { setView('front'); controlsRef.current?.reset(); }} />}><Home /></TooltipTrigger><TooltipContent side="left">Restablecer vista</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Acercar cámara" onClick={() => zoom(0.82)} />}><ZoomIn /></TooltipTrigger><TooltipContent side="left">Acercar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Alejar cámara" onClick={() => zoom(1.22)} />}><ZoomOut /></TooltipTrigger><TooltipContent side="left">Alejar</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar camiseta" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><Shirt /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar camiseta" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
       </div>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-white/70 bg-slate-900/82 p-1 text-white shadow-lg backdrop-blur md:flex">
