@@ -734,8 +734,12 @@ export function ShirtStage() {
           makeDefault
           enabled
           mouseButtons={{
-            LEFT: interactionMode === 'rotate' ? THREE.MOUSE.ROTATE : -1,
+            LEFT: interactionMode === 'rotate' ? THREE.MOUSE.ROTATE : (-1 as unknown as THREE.MOUSE),
             MIDDLE: THREE.MOUSE.ROTATE,
+          }}
+          touches={{
+            ONE: interactionMode === 'rotate' ? THREE.TOUCH.ROTATE : (-1 as unknown as THREE.TOUCH),
+            TWO: THREE.TOUCH.DOLLY_PAN,
           }}
           enablePan={false}
           enableDamping
@@ -791,20 +795,20 @@ export function ShirtStage() {
       </div> */}
 
       <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 rounded-xl border bg-card/92 p-1 shadow-lg backdrop-blur md:hidden">
-        <Button aria-pressed={interactionMode === 'move'} variant={interactionMode === 'move' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
-        <Button aria-pressed={interactionMode === 'rotate'} variant={interactionMode === 'rotate' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar camiseta</Button>
+        <Button aria-pressed={interactionMode === 'move'} variant={interactionMode === 'move' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('move')}><MousePointer2 /> Editar</Button>
+        <Button aria-pressed={interactionMode === 'rotate'} variant={interactionMode === 'rotate' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar</Button>
       </div>
 
       <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-1 rounded-xl border bg-card/90 p-1 shadow-lg backdrop-blur-md md:right-5">
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Restablecer vista" onClick={() => { setView('front'); controlsRef.current?.reset(); }} />}><Home /></TooltipTrigger><TooltipContent side="left">Restablecer vista</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Acercar cámara" onClick={() => zoom(0.82)} />}><ZoomIn /></TooltipTrigger><TooltipContent side="left">Acercar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Alejar cámara" onClick={() => zoom(1.22)} />}><ZoomOut /></TooltipTrigger><TooltipContent side="left">Alejar</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar camiseta" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
       </div>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-sidebar-border bg-sidebar/90 p-1 text-sidebar-foreground shadow-lg backdrop-blur md:flex">
-        <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Mover diseño</Button>
-        <Button aria-pressed={interactionMode === 'rotate'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'rotate' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar camiseta</Button>
+        <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Editar</Button>
+        <Button aria-pressed={interactionMode === 'rotate'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'rotate' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar</Button>
       </div>
     </section>
   );
