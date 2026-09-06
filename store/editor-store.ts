@@ -67,6 +67,7 @@ type EditorState = {
   centerLayer: (id: string) => void;
   beginGesture: () => void;
   updateLayerLive: (id: string, x: number, y: number) => void;
+  updateLayerResizeLive: (id: string, scale: number, x: number, y: number) => void;
   endGesture: () => void;
   replaceImportedDesign: (document: DesignDocument, assets: Record<string, AssetRecord>) => void;
   undo: () => void;
@@ -299,6 +300,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (point.x === layer.transform.x && point.y === layer.transform.y) return state;
     const document = structuredClone(state.document);
     patchLayer(document, id, { transform: point });
+    return { document: stamp(document) };
+  }),
+  updateLayerResizeLive: (id, scale, x, y) => set((state) => {
+    const layer = state.document.layers.find((item) => item.id === id);
+    if (!layer || layer.locked) return state;
+    const nextScale = Math.max(0.1, Math.min(4, scale));
+    if (layer.transform.scale === nextScale && layer.transform.x === x && layer.transform.y === y) return state;
+    const document = structuredClone(state.document);
+    patchLayer(document, id, { transform: { scale: nextScale, x, y } });
     return { document: stamp(document) };
   }),
   endGesture: () => set((state) => {

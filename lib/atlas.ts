@@ -27,7 +27,9 @@ export const FONTS = [
   { id: 'Manrope', name: 'Manrope' },
 ] as const;
 
-type PixelRect = { x: number; y: number; width: number; height: number };
+export type PixelRect = { x: number; y: number; width: number; height: number };
+
+export type LayerFrame = PixelRect;
 
 function toPixelRect(rect: { x: number; y: number; width: number; height: number }, size: number): PixelRect {
   return {
@@ -193,6 +195,60 @@ function drawPattern(context: CanvasRenderingContext2D, rect: PixelRect, style: 
   context.restore();
 }
 
+export function getLayerFrame(
+  context: CanvasRenderingContext2D,
+  rect: PixelRect,
+  layer: DesignLayer,
+  imageAspect = 1,
+) {
+  const baseSize = Math.min(rect.width, rect.height) * 0.34 * layer.transform.scale;
+  let width = baseSize;
+  let height = baseSize;
+  if (layer.type === 'text') {
+    const fontSize = baseSize * (layer.subtype === 'number' ? 1.05 : layer.subtype === 'name' ? 0.4 : 0.32);
+    context.font = `600 ${fontSize}px "${layer.font}", sans-serif`;
+    const metrics = context.measureText(layer.text || ' ');
+    width = metrics.width + fontSize * 0.35;
+    height = fontSize * 1.25;
+  } else {
+    const aspect = Number.isFinite(imageAspect) && imageAspect > 0 ? imageAspect : 1;
+    width = aspect >= 1 ? baseSize : baseSize * aspect;
+    height = aspect >= 1 ? baseSize / aspect : baseSize;
+  }
+  return {
+    x: rect.x + layer.transform.x * rect.width,
+    y: rect.y + layer.transform.y * rect.height,
+    width,
+    height,
+  } satisfies LayerFrame;
+}
+
+export type LayerHandle = 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left';
+
+const HANDLE_ORDER: LayerHandle[] = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
+
+export function getLayerHandlePoint(frame: LayerFrame, handle: LayerHandle) {
+  const x = handle.includes('left') ? -frame.width / 2 : frame.width / 2;
+  const y = handle.includes('top') ? -frame.height / 2 : frame.height / 2;
+  return { x, y };
+}
+
+export function hitTestLayerHandle(
+  frame: LayerFrame,
+  x: number,
+  y: number,
+  rotation: number,
+  radius: number,
+) {
+  const radians = (-rotation * Math.PI) / 180;
+  const localX = (x - frame.x) * Math.cos(radians) - (y - frame.y) * Math.sin(radians);
+  const localY = (x - frame.x) * Math.sin(radians) + (y - frame.y) * Math.cos(radians);
+  return HANDLE_ORDER.find((handle) => {
+    const point = getLayerHandlePoint({ ...frame, x: 0, y: 0 }, handle);
+    return Math.hypot(localX - point.x, localY - point.y) <= radius;
+  }) ?? null;
+}
+
 function drawLayer(
   context: CanvasRenderingContext2D,
   rect: PixelRect,
@@ -202,9 +258,8 @@ function drawLayer(
   safePolygon: [number, number][],
 ) {
   if (!layer.visible) return;
-  const x = rect.x + layer.transform.x * rect.width;
-  const y = rect.y + layer.transform.y * rect.height;
-  const baseSize = Math.min(rect.width, rect.height) * 0.34 * layer.transform.scale;
+  const imageAspect = image ? Number(image.naturalWidth) / Math.max(1, Number(image.naturalHeight)) : 1;
+  const frame = getLayerFrame(context, rect, layer, imageAspect);
 
   context.save();
   context.beginPath();
@@ -215,13 +270,13 @@ function drawLayer(
   });
   context.closePath();
   context.clip();
-  context.translate(x, y);
+  context.translate(frame.x, frame.y);
   context.rotate((layer.transform.rotation * Math.PI) / 180);
 
-  let width = baseSize;
-  let height = baseSize;
+  let width = frame.width;
+  let height = frame.height;
   if (layer.type === 'text') {
-    const fontSize = baseSize * (layer.subtype === 'number' ? 1.05 : layer.subtype === 'name' ? 0.4 : 0.32);
+    const fontSize = Math.min(rect.width, rect.height) * 0.34 * layer.transform.scale * (layer.subtype === 'number' ? 1.05 : layer.subtype === 'name' ? 0.4 : 0.32);
     context.font = `600 ${fontSize}px "${layer.font}", sans-serif`;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
@@ -235,11 +290,6 @@ function drawLayer(
     context.fillStyle = layer.color;
     context.fillText(layer.text, 0, 0);
   } else if (image) {
-    const imageWidth = image.naturalWidth;
-    const imageHeight = image.naturalHeight;
-    const aspect = Number(imageWidth) / Math.max(1, Number(imageHeight));
-    width = aspect >= 1 ? baseSize : baseSize * aspect;
-    height = aspect >= 1 ? baseSize / aspect : baseSize;
     context.drawImage(image, -width / 2, -height / 2, width, height);
   }
 
@@ -248,6 +298,16 @@ function drawLayer(
     context.lineWidth = Math.max(2, rect.width * 0.006);
     context.setLineDash([Math.max(5, rect.width * 0.02), Math.max(4, rect.width * 0.012)]);
     context.strokeRect(-width / 2 - 8, -height / 2 - 8, width + 16, height + 16);
+    const handleSize = Math.max(12, rect.width * 0.018);
+    context.setLineDash([]);
+    for (const handle of HANDLE_ORDER) {
+      const point = getLayerHandlePoint({ ...frame, x: 0, y: 0 }, handle);
+      context.fillStyle = '#ffffff';
+      context.strokeStyle = '#0891B2';
+      context.lineWidth = Math.max(2, rect.width * 0.003);
+      context.fillRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
+      context.strokeRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
+    }
   }
   context.restore();
 }

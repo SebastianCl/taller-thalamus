@@ -18,6 +18,27 @@ describe('historial del editor', () => {
     expect(useEditorStore.getState().document.zones.front.color).toBe('#102A43');
   });
 
+  it('actualiza escala y posición en un solo gesto', () => {
+    const id = useEditorStore.getState().addTextLayer('free', 'Logo');
+    expect(id).not.toBeNull();
+    useEditorStore.getState().beginGesture();
+    useEditorStore.getState().updateLayerResizeLive(id!, 2, 0.4, 0.6);
+    useEditorStore.getState().endGesture();
+
+    const layer = useEditorStore.getState().document.layers[0];
+    expect(layer.transform).toMatchObject({ scale: 2, x: 0.4, y: 0.6 });
+    expect(useEditorStore.getState().past).toHaveLength(1);
+
+    useEditorStore.getState().undo();
+    expect(useEditorStore.getState().document.layers).toHaveLength(0);
+  });
+
+  it('limita la escala de redimensionado', () => {
+    const id = useEditorStore.getState().addTextLayer('free', 'Logo');
+    useEditorStore.getState().updateLayerResizeLive(id!, 99, 0.5, 0.5);
+    expect(useEditorStore.getState().document.layers[0].transform.scale).toBe(4);
+  });
+
   it('aplica un color a todas las zonas como una sola operación', () => {
     useEditorStore.getState().applyTemplate('duotone');
     const previousColors = Object.fromEntries(ZONE_IDS.map((zone) => [zone, useEditorStore.getState().document.zones[zone].color]));

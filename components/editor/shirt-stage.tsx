@@ -10,7 +10,7 @@ import { Box, MousePointer2, Rotate3D, Home, RefreshCw, ZoomIn, ZoomOut } from '
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { hitTestLayer, renderAtlas } from '@/lib/atlas';
+import { getLayerFrame, getLayerHandlePoint, hitTestLayer, hitTestLayerHandle, renderAtlas, type LayerFrame, type LayerHandle, type PixelRect } from '@/lib/atlas';
 import { MODEL_MANIFEST, localPointFromAtlasUv, zoneFromAtlasUv } from '@/lib/model-manifest';
 import { loadUvZoneMask, zoneFromUvMask, type UvZoneMaskLookup } from '@/lib/uv-zone-mask';
 import type { ViewId, ZoneId } from '@/lib/design';
@@ -19,6 +19,93 @@ import { useEditorStore } from '@/store/editor-store';
 
 type CapturedViews = Record<ViewId, Blob>;
 let captureHandler: null | (() => Promise<CapturedViews>) = null;
+
+type ResizeGesture = {
+  id: string;
+  zone: ZoneId;
+  handle: LayerHandle;
+  frame: LayerFrame;
+  anchor: { x: number; y: number };
+  corner: { x: number; y: number };
+  startScale: number;
+  rotation: number;
+};
+
+function atlasRectFor(zone: ZoneId, zoneMask?: UvZoneMaskLookup | null): PixelRect {
+  const rect = zoneMask?.rects?.[zone]?.[0] ?? MODEL_MANIFEST.atlas.zones[zone].rect;
+  return rect;
+}
+
+function imageAspectFor(layer: { type: string; assetId?: string }, assets: Record<string, { width: number; height: number }>) {
+  if (layer.type !== 'image' || !layer.assetId) return 1;
+  const asset = assets[layer.assetId];
+  return asset ? asset.width / Math.max(1, asset.height) : 1;
+}
+
+function pointInAtlasRect(zone: ZoneId, uv: { x: number; y: number }, zoneMask?: UvZoneMaskLookup | null) {
+  const local = localPointFromAtlasUv(zone, uv.x, uv.y, zoneMask?.rects?.[zone]);
+  const rect = atlasRectFor(zone, zoneMask);
+  return { x: rect.x + local.x * rect.width, y: rect.y + local.y * rect.height };
+}
+
+function layerHandleAtPointer(
+  zone: ZoneId,
+  uv: { x: number; y: number },
+  layer: Parameters<typeof getLayerFrame>[2],
+  assets: Record<string, { width: number; height: number }>,
+  measureContext: CanvasRenderingContext2D | null,
+  zoneMask?: UvZoneMaskLookup | null,
+) {
+  if (!measureContext) return null;
+  const rect = atlasRectFor(zone, zoneMask);
+  const frame = getLayerFrame(measureContext, rect, layer, imageAspectFor(layer, assets));
+  const point = pointInAtlasRect(zone, uv, zoneMask);
+  return hitTestLayerHandle(frame, point.x, point.y, layer.transform.rotation, Math.max(0.02, rect.width * 0.035));
+}
+
+function setResizeCursor(event: { nativeEvent: PointerEvent }, handle: LayerHandle | null) {
+  const target = event.nativeEvent.currentTarget as HTMLElement | null;
+  if (!target) return;
+  target.style.cursor = handle === 'top-left' || handle === 'bottom-right'
+    ? 'nwse-resize'
+    : handle === 'top-right' || handle === 'bottom-left'
+      ? 'nesw-resize'
+      : '';
+}
+
+function resizeFromPoint(
+  gesture: ResizeGesture,
+  point: { x: number; y: number },
+) {
+  const radians = (gesture.rotation * Math.PI) / 180;
+  const dx = point.x - gesture.anchor.x;
+  const dy = point.y - gesture.anchor.y;
+  const localX = dx * Math.cos(radians) + dy * Math.sin(radians);
+  const localY = -dx * Math.sin(radians) + dy * Math.cos(radians);
+  const startDx = gesture.corner.x - gesture.anchor.x;
+  const startDy = gesture.corner.y - gesture.anchor.y;
+  const denominator = startDx * startDx + startDy * startDy;
+  const ratio = Math.max(0.01, (localX * startDx + localY * startDy) / denominator);
+  const scale = gesture.startScale * ratio;
+  const scaledAnchorX = (gesture.anchor.x - gesture.frame.x) * ratio;
+  const scaledAnchorY = (gesture.anchor.y - gesture.frame.y) * ratio;
+  const centerX = gesture.anchor.x - (scaledAnchorX * Math.cos(radians) - scaledAnchorY * Math.sin(radians));
+  const centerY = gesture.anchor.y - (scaledAnchorX * Math.sin(radians) + scaledAnchorY * Math.cos(radians));
+  return { scale, x: centerX, y: centerY };
+}
+
+function oppositeHandle(handle: LayerHandle): LayerHandle {
+  return handle === 'top-left' ? 'bottom-right' : handle === 'top-right' ? 'bottom-left' : handle === 'bottom-right' ? 'top-left' : 'top-right';
+}
+
+function rotatedPoint(frame: LayerFrame, handle: LayerHandle, rotation: number) {
+  const local = getLayerHandlePoint({ ...frame, x: 0, y: 0 }, handle);
+  const radians = (rotation * Math.PI) / 180;
+  return {
+    x: frame.x + local.x * Math.cos(radians) - local.y * Math.sin(radians),
+    y: frame.y + local.x * Math.sin(radians) + local.y * Math.cos(radians),
+  };
+}
 
 export async function captureShirtViews() {
   if (!captureHandler) throw new Error('El visor 3D todavía no está listo.');
@@ -68,6 +155,7 @@ function useAtlasTexture(masked = true) {
   const document = useEditorStore((state) => state.document);
   const assets = useEditorStore((state) => state.assets);
   const selectedLayerId = useEditorStore((state) => state.selectedLayerId);
+  const interactionMode = useEditorStore((state) => state.interactionMode);
   const invalidate = useThree((state) => state.invalidate);
   const imageCache = useRef<Record<string, HTMLImageElement>>({});
   const [imageVersion, setImageVersion] = useState(0);
@@ -131,10 +219,11 @@ function useAtlasTexture(masked = true) {
   }, []);
 
   useEffect(() => {
-    renderAtlas(canvas, document, assets, imageCache.current, selectedLayerId, masked ? zoneMask : null);
+    const visibleSelection = interactionMode === 'move' ? selectedLayerId : null;
+    renderAtlas(canvas, document, assets, imageCache.current, visibleSelection, masked ? zoneMask : null);
     texture.needsUpdate = true;
     invalidate();
-  }, [assets, canvas, document, fontVersion, imageVersion, invalidate, masked, selectedLayerId, texture, zoneMask]);
+  }, [assets, canvas, document, fontVersion, imageVersion, interactionMode, invalidate, masked, selectedLayerId, texture, zoneMask]);
 
   useEffect(() => () => texture.dispose(), [texture]);
   return { texture, zoneMask };
@@ -214,15 +303,19 @@ function ProceduralJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group |
   const document = useEditorStore((state) => state.document);
   const selectedZone = useEditorStore((state) => state.selectedZone);
   const selectedLayerId = useEditorStore((state) => state.selectedLayerId);
+  const assets = useEditorStore((state) => state.assets);
   const interactionMode = useEditorStore((state) => state.interactionMode);
   const setSelectedZone = useEditorStore((state) => state.setSelectedZone);
   const selectLayer = useEditorStore((state) => state.selectLayer);
   const beginGesture = useEditorStore((state) => state.beginGesture);
   const updateLayerLive = useEditorStore((state) => state.updateLayerLive);
+  const updateLayerResizeLive = useEditorStore((state) => state.updateLayerResizeLive);
   const endGesture = useEditorStore((state) => state.endGesture);
   const view = useEditorStore((state) => state.view);
   const { texture } = useAtlasTexture(false);
   const dragLayer = useRef<string | null>(null);
+  const resizeGesture = useRef<ResizeGesture | null>(null);
+  const measureContext = useMemo(() => window.document.createElement('canvas').getContext('2d'), []);
 
   const geometries = useMemo(() => ({
     front: createTorsoGeometry('front'),
@@ -249,8 +342,24 @@ function ProceduralJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group |
     onPointerDown: (event) => {
       setSelectedZone(zone);
       if (!event.uv) return;
+      const state = useEditorStore.getState();
+      const selected = state.document.layers.find((layer) => layer.id === state.selectedLayerId);
+      if (interactionMode === 'move' && measureContext && selected?.zone === zone && !selected.locked) {
+        const rect = atlasRectFor(zone);
+        const frame = getLayerFrame(measureContext, rect, selected, imageAspectFor(selected, assets));
+        const point = pointInAtlasRect(zone, event.uv);
+        const handle = hitTestLayerHandle(frame, point.x, point.y, selected.transform.rotation, Math.max(0.02, rect.width * 0.035));
+        if (handle) {
+          const anchor = rotatedPoint(frame, oppositeHandle(handle), selected.transform.rotation);
+          resizeGesture.current = { id: selected.id, zone, handle, frame, anchor, corner: rotatedPoint(frame, handle, selected.transform.rotation), startScale: selected.transform.scale, rotation: selected.transform.rotation };
+          event.stopPropagation();
+          beginGesture();
+          (event.target as Element | null)?.setPointerCapture?.(event.pointerId);
+          return;
+        }
+      }
       const point = localPointFromAtlasUv(zone, event.uv.x, event.uv.y);
-      const layer = hitTestLayer(useEditorStore.getState().document, zone, point.x, point.y);
+      const layer = hitTestLayer(state.document, zone, point.x, point.y);
       if (layer && interactionMode === 'move') {
         event.stopPropagation();
         selectLayer(layer.id);
@@ -263,25 +372,45 @@ function ProceduralJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group |
       }
     },
     onPointerMove: (event) => {
-      if (!dragLayer.current || !event.uv) return;
+      if (!event.uv) {
+        setResizeCursor(event, null);
+        return;
+      }
+      if (resizeGesture.current) {
+        setResizeCursor(event, resizeGesture.current.handle);
+        event.stopPropagation();
+        const point = pointInAtlasRect(resizeGesture.current.zone, event.uv);
+        const next = resizeFromPoint(resizeGesture.current, point);
+        const rect = atlasRectFor(resizeGesture.current.zone);
+        updateLayerResizeLive(resizeGesture.current.id, next.scale, (next.x - rect.x) / rect.width, (next.y - rect.y) / rect.height);
+        return;
+      }
+      const state = useEditorStore.getState();
+      const selected = state.document.layers.find((layer) => layer.id === state.selectedLayerId);
+      setResizeCursor(event, interactionMode === 'move' && selected?.zone === zone && !selected.locked ? layerHandleAtPointer(zone, event.uv, selected, assets, measureContext) : null);
+      if (!dragLayer.current) return;
       event.stopPropagation();
       const point = localPointFromAtlasUv(zone, event.uv.x, event.uv.y);
       updateLayerLive(dragLayer.current, point.x, point.y);
     },
     onPointerUp: (event) => {
-      if (!dragLayer.current) return;
+      if (!dragLayer.current && !resizeGesture.current) return;
       event.stopPropagation();
       dragLayer.current = null;
+      resizeGesture.current = null;
+      setResizeCursor(event, null);
       endGesture();
       (event.target as Element | null)?.releasePointerCapture?.(event.pointerId);
     },
     onPointerCancel: (event) => {
-      if (!dragLayer.current) return;
+      if (!dragLayer.current && !resizeGesture.current) return;
       event.stopPropagation();
       dragLayer.current = null;
+      resizeGesture.current = null;
+      setResizeCursor(event, null);
       endGesture();
     },
-  }), [beginGesture, endGesture, interactionMode, selectLayer, setSelectedZone, updateLayerLive]);
+  }), [assets, beginGesture, endGesture, interactionMode, measureContext, selectLayer, setSelectedZone, updateLayerLive, updateLayerResizeLive]);
 
   const zone = document.zones;
 
@@ -328,13 +457,17 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
   const fabricRoughness = useMemo(() => createFabricScalarTexture(220, 18), []);
   const fabricAo = useMemo(() => createFabricScalarTexture(247, 10), []);
   const view = useEditorStore((state) => state.view);
+  const assets = useEditorStore((state) => state.assets);
   const interactionMode = useEditorStore((state) => state.interactionMode);
   const setSelectedZone = useEditorStore((state) => state.setSelectedZone);
   const selectLayer = useEditorStore((state) => state.selectLayer);
   const beginGesture = useEditorStore((state) => state.beginGesture);
   const updateLayerLive = useEditorStore((state) => state.updateLayerLive);
+  const updateLayerResizeLive = useEditorStore((state) => state.updateLayerResizeLive);
   const endGesture = useEditorStore((state) => state.endGesture);
   const dragLayer = useRef<string | null>(null);
+  const resizeGesture = useRef<ResizeGesture | null>(null);
+  const measureContext = useMemo(() => window.document.createElement('canvas').getContext('2d'), []);
 
   const model = useMemo(() => {
     const clone = gltf.scene.clone(true);
@@ -400,8 +533,24 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
       : zoneFromAtlasUv(event.uv.x, event.uv.y);
     if (!zone) return;
     setSelectedZone(zone);
+    const state = useEditorStore.getState();
+    const selected = state.document.layers.find((layer) => layer.id === state.selectedLayerId);
+    if (interactionMode === 'move' && measureContext && selected?.zone === zone && !selected.locked) {
+      const rect = atlasRectFor(zone, zoneMask);
+      const frame = getLayerFrame(measureContext, rect, selected, imageAspectFor(selected, assets));
+      const point = pointInAtlasRect(zone, event.uv, zoneMask);
+      const handle = hitTestLayerHandle(frame, point.x, point.y, selected.transform.rotation, Math.max(0.02, rect.width * 0.035));
+      if (handle) {
+        const anchor = rotatedPoint(frame, oppositeHandle(handle), selected.transform.rotation);
+        resizeGesture.current = { id: selected.id, zone, handle, frame, anchor, corner: rotatedPoint(frame, handle, selected.transform.rotation), startScale: selected.transform.scale, rotation: selected.transform.rotation };
+        event.stopPropagation();
+        beginGesture();
+        (event.target as Element | null)?.setPointerCapture?.(event.pointerId);
+        return;
+      }
+    }
     const point = localPointFromAtlasUv(zone, event.uv.x, event.uv.y, zoneMask?.rects?.[zone]);
-    const layer = hitTestLayer(useEditorStore.getState().document, zone, point.x, point.y);
+    const layer = hitTestLayer(state.document, zone, point.x, point.y);
     if (layer && interactionMode === 'move') {
       event.stopPropagation();
       selectLayer(layer.id);
@@ -414,7 +563,24 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
     }
   };
   const onPointerMove = (event: ThreeEvent<PointerEvent>) => {
-    if (!dragLayer.current || !event.uv) return;
+    if (!event.uv) {
+      setResizeCursor(event, null);
+      return;
+    }
+    if (resizeGesture.current) {
+      setResizeCursor(event, resizeGesture.current.handle);
+      event.stopPropagation();
+      const point = pointInAtlasRect(resizeGesture.current.zone, event.uv, zoneMask);
+      const next = resizeFromPoint(resizeGesture.current, point);
+      const rect = atlasRectFor(resizeGesture.current.zone, zoneMask);
+      updateLayerResizeLive(resizeGesture.current.id, next.scale, (next.x - rect.x) / rect.width, (next.y - rect.y) / rect.height);
+      return;
+    }
+    const state = useEditorStore.getState();
+    const selected = state.document.layers.find((layer) => layer.id === state.selectedLayerId);
+    const hoverZone = zoneMask ? zoneFromUvMask(zoneMask, event.uv.x, event.uv.y) : zoneFromAtlasUv(event.uv.x, event.uv.y);
+    setResizeCursor(event, interactionMode === 'move' && hoverZone && selected?.zone === hoverZone && !selected.locked ? layerHandleAtPointer(hoverZone, event.uv, selected, assets, measureContext, zoneMask) : null);
+    if (!dragLayer.current) return;
     const layer = useEditorStore.getState().document.layers.find((item) => item.id === dragLayer.current);
     if (!layer) return;
     event.stopPropagation();
@@ -422,9 +588,11 @@ function LicensedJerseyModel({ groupRef }: { groupRef: RefObject<THREE.Group | n
     updateLayerLive(layer.id, point.x, point.y);
   };
   const finish = (event: ThreeEvent<PointerEvent>) => {
-    if (!dragLayer.current) return;
+    if (!dragLayer.current && !resizeGesture.current) return;
     event.stopPropagation();
     dragLayer.current = null;
+    resizeGesture.current = null;
+    setResizeCursor(event, null);
     endGesture();
     (event.target as Element | null)?.releasePointerCapture?.(event.pointerId);
   };
