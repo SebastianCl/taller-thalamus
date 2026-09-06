@@ -91,6 +91,8 @@ export const ZONE_LABELS: Record<ZoneId, string> = {
   cuffLeft: 'Puño izquierdo',
   cuffRight: 'Puño derecho',
   waistband: 'Pretina',
+  armholeLeft: 'Borde de sisa izquierdo',
+  armholeRight: 'Borde de sisa derecho',
 };
 
 export const PALETTE = [

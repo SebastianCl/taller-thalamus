@@ -1054,5 +1054,375 @@
         "label": "Lado derecho"
       }
     }
+  },
+  "taller-camisilla-v1": {
+    "version": 1,
+    "modelId": "taller-camisilla-v1",
+    "source": {
+      "kind": "licensed-glb",
+      "name": "Kapiti_CC_20_Undershirt",
+      "author": "Tineli",
+      "license": "CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+      "sourceUrl": "https://sketchfab.com/3d-models/kapiti-cc-20-undershirt-2a37056f25e440c5b57774e8e5197347",
+      "modifications": [
+        "Original graphics removed; fabric material replaced",
+        "Independent zone UV atlas and 4K mask",
+        "Source GLB transforms baked; indexed geometry simplified with locked boundaries",
+        "Mirrored sleeves and torso UVs separated; normalized scale"
+      ]
+    },
+    "meshes": {
+      "sideLeft": [
+        "sideLeft"
+      ],
+      "front": [
+        "front"
+      ],
+      "back": [
+        "back"
+      ],
+      "sideRight": [
+        "sideRight"
+      ],
+      "armholeLeft": [
+        "armholeLeft"
+      ],
+      "collar": [
+        "collar"
+      ],
+      "armholeRight": [
+        "armholeRight"
+      ]
+    },
+    "materials": [
+      "Fabric"
+    ],
+    "atlas": {
+      "desktopSize": 2048,
+      "mobileSize": 1024,
+      "mask": {
+        "url": "/models/garments/taller-camisilla-v1-sketchfab-mask.png",
+        "sourceSize": 4096,
+        "torsoSideExpansion": 0,
+        "colors": {
+          "sideLeft": [
+            [
+              255,
+              255,
+              0
+            ]
+          ],
+          "front": [
+            [
+              255,
+              0,
+              0
+            ]
+          ],
+          "back": [
+            [
+              0,
+              0,
+              255
+            ]
+          ],
+          "sideRight": [
+            [
+              0,
+              255,
+              0
+            ]
+          ],
+          "armholeLeft": [
+            [
+              255,
+              0,
+              128
+            ]
+          ],
+          "collar": [
+            [
+              128,
+              0,
+              255
+            ]
+          ],
+          "armholeRight": [
+            [
+              0,
+              128,
+              255
+            ]
+          ]
+        },
+        "rects": {
+          "sideLeft": [
+            {
+              "x": 0.76,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "front": [
+            {
+              "x": 0.02,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "back": [
+            {
+              "x": 0.39,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "sideRight": [
+            {
+              "x": 0.88,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "armholeLeft": [
+            {
+              "x": 0.02,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ],
+          "collar": [
+            {
+              "x": 0.78,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.07
+            }
+          ],
+          "armholeRight": [
+            {
+              "x": 0.24,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ]
+        }
+      },
+      "zones": {
+        "sideLeft": {
+          "rect": {
+            "x": 0.76,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "front": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "back": {
+          "rect": {
+            "x": 0.39,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sideRight": {
+          "rect": {
+            "x": 0.88,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "armholeLeft": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "collar": {
+          "rect": {
+            "x": 0.78,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.07
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "armholeRight": {
+          "rect": {
+            "x": 0.24,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        }
+      }
+    },
+    "cameras": {
+      "front": {
+        "rotationY": 0,
+        "label": "Frente"
+      },
+      "back": {
+        "rotationY": 3.141592653589793,
+        "label": "Espalda"
+      },
+      "left": {
+        "rotationY": -1.1344640137963142,
+        "label": "Lado izquierdo"
+      },
+      "right": {
+        "rotationY": 1.1344640137963142,
+        "label": "Lado derecho"
+      }
+    }
   }
 }

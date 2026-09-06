@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { deflateSync } from 'node:zlib';
 import { Document, NodeIO } from '@gltf-transform/core';
 import { MeshoptSimplifier } from 'meshoptimizer';
@@ -19,6 +19,8 @@ const ZONES = [
   'cuffLeft',
   'cuffRight',
   'waistband',
+  'armholeLeft',
+  'armholeRight',
 ];
 const COLORS = [
   [255, 0, 0],
@@ -33,6 +35,8 @@ const COLORS = [
   [0, 128, 128],
   [0, 128, 0],
   [128, 128, 255],
+  [255, 0, 128],
+  [0, 128, 255],
 ];
 const RECTS = {
   front: [0.02, 0.02, 0.35, 0.5],
@@ -47,6 +51,8 @@ const RECTS = {
   cuffLeft: [0.78, 0.65, 0.09, 0.19],
   cuffRight: [0.89, 0.65, 0.09, 0.19],
   waistband: [0.02, 0.89, 0.96, 0.09],
+  armholeLeft: [0.02, 0.55, 0.2, 0.31],
+  armholeRight: [0.24, 0.55, 0.2, 0.31],
 };
 const SIZE = 4096;
 
@@ -143,8 +149,15 @@ function png(mask) {
   ]);
 }
 await mkdir('public/models/garments', { recursive: true });
-const manifests = {};
-for (const src of sources) {
+const selectedId = process.argv[2];
+if (selectedId && !sources.some((src) => src.id === selectedId))
+  throw Error('Unknown garment');
+const manifests = selectedId
+  ? JSON.parse(await readFile('lib/garment-manifests.json', 'utf8'))
+  : {};
+for (const src of sources.filter(
+  (item) => !selectedId || item.id === selectedId,
+)) {
   const {
     positions,
     normals,
@@ -283,7 +296,7 @@ for (const src of sources) {
       ids.map((i) => projection(positions[i], zone, src, texcoords[i])),
     );
     // Unwrap triangles that cross the cylindrical seam without stretching across the atlas.
-    if (zone === 'waistband')
+    if (zone === 'waistband' || src.rings?.[zone])
       for (const points of projected) {
         const xs = points.map((p) => p[0]);
         if (Math.max(...xs) - Math.min(...xs) > Math.PI)
@@ -397,10 +410,7 @@ for (const src of sources) {
         'POSITION',
         accessor('position', new Float32Array(finalPos), 'VEC3'),
       )
-      .setAttribute(
-        'NORMAL',
-        accessor('normal', finalNorm, 'VEC3'),
-      )
+      .setAttribute('NORMAL', accessor('normal', finalNorm, 'VEC3'))
       .setAttribute(
         'TEXCOORD_0',
         accessor('uv', new Float32Array(finalUv), 'VEC2'),

@@ -40,7 +40,7 @@ describe('recursos de las prendas', () => {
     }
   });
 
-  it.each(GARMENTS.slice(1))(
+  it.each(GARMENTS.filter((garment) => garment.id !== 'taller-sport-v1'))(
     '$label tiene mallas, UV y máscaras independientes para todas sus zonas',
     async (garment) => {
       const document = await new NodeIO().read(`public${garment.url}`);
@@ -113,10 +113,14 @@ describe('recursos de las prendas', () => {
         ),
       );
       expect(audit.crossZoneOverlaps).toBe(0);
-      const sourceHash =
-        garment.id === 'taller-hoodie-v1'
-          ? '249be85dc3fe1dfc47640383e4bc79c1e43b6e1748db41e8c273201a01dc4ff9'
-          : '4e6caffbe391a8aa051b400e3318c76b17996c2ef90b9cde700768cee38add25';
+      const sourceHash = {
+        'taller-hoodie-v1':
+          '249be85dc3fe1dfc47640383e4bc79c1e43b6e1748db41e8c273201a01dc4ff9',
+        'taller-camibuso-v1':
+          '4e6caffbe391a8aa051b400e3318c76b17996c2ef90b9cde700768cee38add25',
+        'taller-camisilla-v1':
+          '9128a41f38398a6daf40aa77c5e485775b45b82c22bd3c10b5b938d0361d70d5',
+      }[garment.id];
       expect(audit.sourceSha256).toBe(sourceHash);
       expect(audit.triangles).toBeLessThan(audit.sourceTriangles * 0.4);
       expect(garment.manifest.source.sourceUrl).toContain(

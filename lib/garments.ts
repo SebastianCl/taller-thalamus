@@ -26,6 +26,12 @@ export const GARMENTS = [
     manifest: MODEL_MANIFEST,
   },
   {
+    id: 'taller-camisilla-v1',
+    label: 'Camisilla',
+    url: '/models/garments/taller-camisilla-v1-sketchfab.glb',
+    manifest: manifests['taller-camisilla-v1'] as ModelManifest,
+  },
+  {
     id: 'taller-hoodie-v1',
     label: 'Hoodie',
     url: '/models/garments/taller-hoodie-v1-sketchfab.glb',

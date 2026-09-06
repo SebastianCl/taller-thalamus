@@ -24,6 +24,32 @@ beforeEach(() =>
 );
 
 describe('prendas y transferencia', () => {
+  it('oculta las mangas en camisilla, conserva las capas y permite deshacer', () => {
+    const store = useEditorStore.getState;
+    store().setSelectedZone('sleeveLeft');
+    const id = store().addTextLayer('free', 'MANGA')!;
+    const original = structuredClone(store().document);
+    store().changeGarment('taller-camisilla-v1');
+    expect(store().selectedZone).toBe('front');
+    expect(store().document.layers).toEqual(original.layers);
+    store().selectLayer(id);
+    store().updateLayer(id, { text: 'NO' });
+    expect(store().selectedLayerId).toBeNull();
+    expect(store().document.layers).toEqual(original.layers);
+    store().undo();
+    expect(store().document).toEqual(original);
+    store().redo();
+    store().setSelectedZone('armholeLeft');
+    store().addTextLayer('free', 'SISA');
+    const camisilla = structuredClone(store().document);
+    store().changeGarment('taller-sport-v1');
+    store().changeGarment('taller-camisilla-v1');
+    expect(store().document.layers).toEqual(camisilla.layers);
+    expect(parseDesignDocument(store().document)).toEqual(store().document);
+    store().newDesign();
+    expect(store().document.modelId).toBe('taller-camisilla-v1');
+    expect(store().document.layers).toEqual([]);
+  });
   it('recupera el hoodie V2 anterior y añade el bolsillo sin alterar el diseño', () => {
     const source = createDocument('taller-hoodie-v1');
     source.zones.front.color = '#123456';
@@ -220,7 +246,9 @@ describe('aislamiento de mapas y capturas', () => {
     expect(store().stageStatus).toBe('ready');
   });
   it('las coordenadas UV de cada zona nueva se convierten con su propio mapa', () => {
-    for (const garment of GARMENTS.slice(1)) {
+    for (const garment of GARMENTS.filter(
+      (item) => item.id !== 'taller-sport-v1',
+    )) {
       for (const zone of GARMENT_ZONES[garment.id]) {
         const { rect } = garment.manifest.atlas.zones[zone];
         const u = rect.x + rect.width / 2,

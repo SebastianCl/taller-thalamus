@@ -184,7 +184,7 @@ const inside = (rect: NormalizedRect, u: number, v: number) => u >= rect.x && u 
 
 export function zoneFromAtlasUv(u: number, v: number, manifest = MODEL_MANIFEST): ZoneId | null {
   // Narrow seam/collar patches and side masks must win over the larger torso islands.
-  for (const zone of ['hood', 'pocket', 'cuffLeft', 'cuffRight', 'waistband', 'collar', 'sideLeft', 'sideRight', 'sleeveLeft', 'sleeveRight', 'front', 'back'] as ZoneId[]) {
+  for (const zone of ['armholeLeft', 'armholeRight', 'hood', 'pocket', 'cuffLeft', 'cuffRight', 'waistband', 'collar', 'sideLeft', 'sideRight', 'sleeveLeft', 'sleeveRight', 'front', 'back'] as ZoneId[]) {
     const config = manifest.atlas.zones[zone];
     if (!config) continue;
     if ([config.rect, ...(config.secondaryRects ?? [])].some((rect) => inside(rect, u, v))) return zone;

@@ -1,6 +1,6 @@
 # Taller 3D
 
-Configurador web de prendas en 3D: camiseta, hoodie y camibuso de manga larga
+Configurador web de prendas en 3D: camiseta, camisilla, hoodie y camibuso de manga larga
 y cuello redondo. Permite personalizar colores, textos, imágenes y capas, conservar el trabajo en el
 navegador e importar o exportar proyectos completos.
 
@@ -19,6 +19,7 @@ navegador e importar o exportar proyectos completos.
 - Interfaz adaptable para escritorio y dispositivos móviles.
 - Selector de prenda con transferencia del diseño y deshacer/rehacer.
 - Capucha, puños y pretina editables cuando existen en el modelo.
+- Camisilla con frente, espalda, laterales, cuello y bordes de sisa independientes.
 - Zonas ausentes conservadas en el proyecto; sus capas reaparecen al volver
   a una prenda compatible y siguen contando dentro del límite de 20 elementos.
 - Documentos versión 2 con migración automática desde las versiones 0 y 1.

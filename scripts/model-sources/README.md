@@ -27,6 +27,20 @@ Crew-neck long-sleeve T-shirt with separate collar, cuffs and hem.
 
 ## Preparation
 
+### Camisilla
+
+- Supplied file: `undershirt.glb` (retained unchanged)
+- Asset: Kapiti_CC_20_Undershirt
+- Author: Tineli
+- Source: https://sketchfab.com/3d-models/kapiti-cc-20-undershirt-2a37056f25e440c5b57774e8e5197347
+- License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
+
+The source's constant-UV bindings are separated into collar and left/right
+armhole zones, with reconstructed ring coordinates. Front, back and side panels
+use independent projections. There are no sleeves or separate waistband.
+Run `node scripts/prepare-garments.mjs taller-camisilla-v1` to regenerate only
+this garment, leaving all other GLBs, masks and manifest entries unchanged.
+
 Run `node scripts/prepare-garments.mjs` with the installed project dependencies.
 `sketchfab-garments.mjs` checks SHA-256 source fingerprints before applying its
 reviewed sewing-piece assignments. Both original GLBs remain unchanged.
