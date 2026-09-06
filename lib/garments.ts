@@ -14,6 +14,12 @@ import manifests from '@/lib/garment-manifests.json';
 
 export const GARMENTS = [
   {
+    id: 'taller-camibuso-v1',
+    label: 'Camibuso',
+    url: '/models/garments/taller-camibuso-v1-sketchfab.glb',
+    manifest: manifests['taller-camibuso-v1'] as ModelManifest,
+  },
+  {
     id: 'taller-sport-v1',
     label: 'Camiseta',
     url: '/models/taller-sport.glb',
@@ -24,12 +30,6 @@ export const GARMENTS = [
     label: 'Hoodie',
     url: '/models/garments/taller-hoodie-v1-sketchfab.glb',
     manifest: manifests['taller-hoodie-v1'] as ModelManifest,
-  },
-  {
-    id: 'taller-camibuso-v1',
-    label: 'Camibuso',
-    url: '/models/garments/taller-camibuso-v1-sketchfab.glb',
-    manifest: manifests['taller-camibuso-v1'] as ModelManifest,
   },
 ] as const;
 
