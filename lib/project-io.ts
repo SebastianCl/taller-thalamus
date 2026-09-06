@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { getGarment } from '@/lib/garments';
 import { z } from 'zod';
 
 import type { DesignDocument, ViewId } from '@/lib/design';
@@ -43,6 +44,7 @@ export async function exportProject(
   views: Record<ViewId, Blob>,
 ) {
   const zip = new JSZip();
+  const source = getGarment(document.modelId).manifest.source;
   const validatedDocument = designDocumentSchema.parse(document);
   zip.file('design.json', JSON.stringify(validatedDocument, null, 2));
 
@@ -77,10 +79,10 @@ export async function exportProject(
       'Taller 3D — Créditos del proyecto',
       '',
       'Modelo de referencia:',
-      '“Men Regular Apparel Fit Sporty T-Shirt” por BINARYCLOTH (@binaryclothofficial).',
-      'Fuente: https://sketchfab.com/3d-models/men-regular-apparel-fit-sporty-t-shirt-4d055bb8c1e04549a4b2dac7b27ebb2c',
-      'Licencia: Creative Commons Attribution 4.0 International — https://creativecommons.org/licenses/by/4.0/',
-      'Modificaciones en Taller 3D: sustitución de gráfica, materiales optimizados, escalado y sistema de zonas de diseño.',
+      `${source.name} — ${source.author}`,
+      `Fuente: ${source.sourceUrl}`,
+      `Licencia: ${source.license}`,
+      `Modificaciones en Taller 3D: ${source.modifications.join('; ')}`,
       '',
       'Los logos y textos añadidos por el cliente permanecen locales y son responsabilidad de su propietario.',
     ].join('\n'),

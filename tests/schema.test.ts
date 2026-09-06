@@ -4,7 +4,7 @@ import { createDocument } from '@/lib/design';
 import { designDocumentSchema, parseDesignDocument, webMcpColorInputSchema, webMcpTemplateInputSchema, webMcpTextInputSchema } from '@/lib/schema';
 
 describe('DesignDocument', () => {
-  it('serializa y valida un documento versión 1', () => {
+  it('serializa y valida un documento versión 2', () => {
     const document = createDocument();
     const restored = designDocumentSchema.parse(JSON.parse(JSON.stringify(document)));
     expect(restored).toEqual(document);
@@ -53,7 +53,7 @@ describe('DesignDocument', () => {
     const zones = legacy.zones as Record<string, unknown>;
     delete zones.collar;
     const migrated = parseDesignDocument(legacy);
-    expect(migrated.schemaVersion).toBe(1);
+    expect(migrated.schemaVersion).toBe(2);
     expect(migrated.templateId).toBe('blank');
     expect(migrated.zones.collar.color).toMatch(/^#/);
   });

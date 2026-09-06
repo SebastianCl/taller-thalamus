@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { ALL_ZONE_IDS, GARMENT_ZONES, MODEL_IDS } from '@/lib/garment-types';
 import { createDocument, ZONE_IDS, type DesignDocument } from '@/lib/design';
 
-const zoneIdSchema = z.enum(ZONE_IDS);
+const zoneIdSchema = z.enum(ALL_ZONE_IDS);
 const templateIds = ['blank', 'duotone', 'shoulders', 'sides', 'diagonal', 'stripe'] as const;
 const transformSchema = z.object({
   x: z.number().min(0).max(1),
@@ -51,25 +52,21 @@ const zoneStyleSchema = z.object({
 });
 
 export const designDocumentSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   id: z.string().min(1),
-  modelId: z.literal('taller-sport-v1'),
+  modelId: z.enum(MODEL_IDS),
   templateId: z.enum(templateIds),
-  zones: z.object({
-    front: zoneStyleSchema,
-    back: zoneStyleSchema,
-    sleeveLeft: zoneStyleSchema,
-    sleeveRight: zoneStyleSchema,
-    collar: zoneStyleSchema,
-    sideLeft: zoneStyleSchema,
-    sideRight: zoneStyleSchema,
-  }),
+  zones: z.partialRecord(zoneIdSchema, zoneStyleSchema),
   layers: z.array(z.discriminatedUnion('type', [imageLayerSchema, textLayerSchema])).max(20),
   modifiedAt: z.string().min(1),
 }).superRefine((document, context) => {
+  for (const zone of GARMENT_ZONES[document.modelId]) {
+    if (!document.zones[zone]) context.addIssue({ code: 'custom', path: ['zones', zone], message: 'Falta una zona de la prenda.' });
+  }
   const ids = new Set<string>();
   const orders = new Set<number>();
   document.layers.forEach((layer, index) => {
+    if (!document.zones[layer.zone]) context.addIssue({ code: 'custom', path: ['layers', index, 'zone'], message: 'La capa no tiene una zona guardada.' });
     if (ids.has(layer.id)) context.addIssue({ code: 'custom', path: ['layers', index, 'id'], message: 'El identificador de capa está duplicado.' });
     if (orders.has(layer.order)) context.addIssue({ code: 'custom', path: ['layers', index, 'order'], message: 'El orden de capa está duplicado.' });
     ids.add(layer.id);
@@ -97,6 +94,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function parseDesignDocument(input: unknown): DesignDocument {
+  if (isRecord(input) && input.schemaVersion === 1) {
+    // V1 only supported the original shirt. Never silently accept another model.
+    z.literal('taller-sport-v1').parse(input.modelId);
+    return designDocumentSchema.parse({ ...input, schemaVersion: 2 }) as DesignDocument;
+  }
   if (!isRecord(input) || input.schemaVersion !== 0) return designDocumentSchema.parse(input) as DesignDocument;
   const fallback = createDocument();
   const legacyZones = isRecord(input.zones) ? input.zones : {};
@@ -109,7 +111,7 @@ export function parseDesignDocument(input: unknown): DesignDocument {
     : [];
   return designDocumentSchema.parse({
     ...input,
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: typeof input.id === 'string' ? input.id : fallback.id,
     modelId: 'taller-sport-v1',
     templateId: templateIds.includes(input.templateId as typeof templateIds[number]) ? input.templateId : 'blank',

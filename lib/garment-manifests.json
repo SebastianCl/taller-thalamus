@@ -1,0 +1,1010 @@
+{
+  "taller-hoodie-v1": {
+    "version": 1,
+    "modelId": "taller-hoodie-v1",
+    "source": {
+      "kind": "licensed-glb",
+      "name": "elvs_hooded_sweat_jacket1",
+      "author": "Elvaerwyn",
+      "license": "CC BY (as declared by the author)",
+      "sourceUrl": "https://static.makehumancommunity.org/assets/assetpacks/shirts02.html",
+      "modifications": [
+        "Original graphics removed; fabric material replaced",
+        "Independent zone UV atlas and 4K mask",
+        "Converted OBJ to indexed GLB; normalized scale"
+      ]
+    },
+    "meshes": {
+      "sideRight": [
+        "sideRight"
+      ],
+      "back": [
+        "back"
+      ],
+      "waistband": [
+        "waistband"
+      ],
+      "sleeveRight": [
+        "sleeveRight"
+      ],
+      "front": [
+        "front"
+      ],
+      "hood": [
+        "hood"
+      ],
+      "cuffRight": [
+        "cuffRight"
+      ],
+      "sideLeft": [
+        "sideLeft"
+      ],
+      "sleeveLeft": [
+        "sleeveLeft"
+      ],
+      "cuffLeft": [
+        "cuffLeft"
+      ]
+    },
+    "materials": [
+      "Fabric"
+    ],
+    "atlas": {
+      "desktopSize": 2048,
+      "mobileSize": 1024,
+      "mask": {
+        "url": "/models/garments/taller-hoodie-v1-mask.png",
+        "sourceSize": 4096,
+        "torsoSideExpansion": 0,
+        "colors": {
+          "sideRight": [
+            [
+              0,
+              255,
+              0
+            ]
+          ],
+          "back": [
+            [
+              0,
+              0,
+              255
+            ]
+          ],
+          "waistband": [
+            [
+              128,
+              128,
+              255
+            ]
+          ],
+          "sleeveRight": [
+            [
+              0,
+              255,
+              255
+            ]
+          ],
+          "front": [
+            [
+              255,
+              0,
+              0
+            ]
+          ],
+          "hood": [
+            [
+              128,
+              128,
+              0
+            ]
+          ],
+          "cuffRight": [
+            [
+              0,
+              128,
+              0
+            ]
+          ],
+          "sideLeft": [
+            [
+              255,
+              255,
+              0
+            ]
+          ],
+          "sleeveLeft": [
+            [
+              255,
+              128,
+              0
+            ]
+          ],
+          "cuffLeft": [
+            [
+              0,
+              128,
+              128
+            ]
+          ]
+        },
+        "rects": {
+          "sideRight": [
+            {
+              "x": 0.88,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "back": [
+            {
+              "x": 0.39,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "waistband": [
+            {
+              "x": 0.02,
+              "y": 0.89,
+              "width": 0.96,
+              "height": 0.09
+            }
+          ],
+          "sleeveRight": [
+            {
+              "x": 0.24,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ],
+          "front": [
+            {
+              "x": 0.02,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "hood": [
+            {
+              "x": 0.46,
+              "y": 0.55,
+              "width": 0.3,
+              "height": 0.31
+            }
+          ],
+          "cuffRight": [
+            {
+              "x": 0.89,
+              "y": 0.65,
+              "width": 0.09,
+              "height": 0.19
+            }
+          ],
+          "sideLeft": [
+            {
+              "x": 0.76,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "sleeveLeft": [
+            {
+              "x": 0.02,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ],
+          "cuffLeft": [
+            {
+              "x": 0.78,
+              "y": 0.65,
+              "width": 0.09,
+              "height": 0.19
+            }
+          ]
+        }
+      },
+      "zones": {
+        "sideRight": {
+          "rect": {
+            "x": 0.88,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "back": {
+          "rect": {
+            "x": 0.39,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "waistband": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.89,
+            "width": 0.96,
+            "height": 0.09
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sleeveRight": {
+          "rect": {
+            "x": 0.24,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "front": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "hood": {
+          "rect": {
+            "x": 0.46,
+            "y": 0.55,
+            "width": 0.3,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "cuffRight": {
+          "rect": {
+            "x": 0.89,
+            "y": 0.65,
+            "width": 0.09,
+            "height": 0.19
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sideLeft": {
+          "rect": {
+            "x": 0.76,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sleeveLeft": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "cuffLeft": {
+          "rect": {
+            "x": 0.78,
+            "y": 0.65,
+            "width": 0.09,
+            "height": 0.19
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        }
+      }
+    },
+    "cameras": {
+      "front": {
+        "rotationY": 0,
+        "label": "Frente"
+      },
+      "back": {
+        "rotationY": 3.141592653589793,
+        "label": "Espalda"
+      },
+      "left": {
+        "rotationY": -1.1344640137963142,
+        "label": "Lado izquierdo"
+      },
+      "right": {
+        "rotationY": 1.1344640137963142,
+        "label": "Lado derecho"
+      }
+    }
+  },
+  "taller-camibuso-v1": {
+    "version": 1,
+    "modelId": "taller-camibuso-v1",
+    "source": {
+      "kind": "licensed-glb",
+      "name": "toigo_fisherman_sweater",
+      "author": "MargaretToigo",
+      "license": "CC0 1.0",
+      "sourceUrl": "https://static.makehumancommunity.org/assets/assetpacks/shirts01.html",
+      "modifications": [
+        "Original graphics removed; fabric material replaced",
+        "Independent zone UV atlas and 4K mask",
+        "Converted OBJ to indexed GLB; normalized scale"
+      ]
+    },
+    "meshes": {
+      "front": [
+        "front"
+      ],
+      "sideLeft": [
+        "sideLeft"
+      ],
+      "back": [
+        "back"
+      ],
+      "collar": [
+        "collar"
+      ],
+      "sleeveLeft": [
+        "sleeveLeft"
+      ],
+      "cuffLeft": [
+        "cuffLeft"
+      ],
+      "sideRight": [
+        "sideRight"
+      ],
+      "sleeveRight": [
+        "sleeveRight"
+      ],
+      "cuffRight": [
+        "cuffRight"
+      ],
+      "waistband": [
+        "waistband"
+      ]
+    },
+    "materials": [
+      "Fabric"
+    ],
+    "atlas": {
+      "desktopSize": 2048,
+      "mobileSize": 1024,
+      "mask": {
+        "url": "/models/garments/taller-camibuso-v1-mask.png",
+        "sourceSize": 4096,
+        "torsoSideExpansion": 0,
+        "colors": {
+          "front": [
+            [
+              255,
+              0,
+              0
+            ]
+          ],
+          "sideLeft": [
+            [
+              255,
+              255,
+              0
+            ]
+          ],
+          "back": [
+            [
+              0,
+              0,
+              255
+            ]
+          ],
+          "collar": [
+            [
+              128,
+              0,
+              255
+            ]
+          ],
+          "sleeveLeft": [
+            [
+              255,
+              128,
+              0
+            ]
+          ],
+          "cuffLeft": [
+            [
+              0,
+              128,
+              128
+            ]
+          ],
+          "sideRight": [
+            [
+              0,
+              255,
+              0
+            ]
+          ],
+          "sleeveRight": [
+            [
+              0,
+              255,
+              255
+            ]
+          ],
+          "cuffRight": [
+            [
+              0,
+              128,
+              0
+            ]
+          ],
+          "waistband": [
+            [
+              128,
+              128,
+              255
+            ]
+          ]
+        },
+        "rects": {
+          "front": [
+            {
+              "x": 0.02,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "sideLeft": [
+            {
+              "x": 0.76,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "back": [
+            {
+              "x": 0.39,
+              "y": 0.02,
+              "width": 0.35,
+              "height": 0.5
+            }
+          ],
+          "collar": [
+            {
+              "x": 0.78,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.07
+            }
+          ],
+          "sleeveLeft": [
+            {
+              "x": 0.02,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ],
+          "cuffLeft": [
+            {
+              "x": 0.78,
+              "y": 0.65,
+              "width": 0.09,
+              "height": 0.19
+            }
+          ],
+          "sideRight": [
+            {
+              "x": 0.88,
+              "y": 0.02,
+              "width": 0.1,
+              "height": 0.5
+            }
+          ],
+          "sleeveRight": [
+            {
+              "x": 0.24,
+              "y": 0.55,
+              "width": 0.2,
+              "height": 0.31
+            }
+          ],
+          "cuffRight": [
+            {
+              "x": 0.89,
+              "y": 0.65,
+              "width": 0.09,
+              "height": 0.19
+            }
+          ],
+          "waistband": [
+            {
+              "x": 0.02,
+              "y": 0.89,
+              "width": 0.96,
+              "height": 0.09
+            }
+          ]
+        }
+      },
+      "zones": {
+        "front": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sideLeft": {
+          "rect": {
+            "x": 0.76,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "back": {
+          "rect": {
+            "x": 0.39,
+            "y": 0.02,
+            "width": 0.35,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "collar": {
+          "rect": {
+            "x": 0.78,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.07
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sleeveLeft": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "cuffLeft": {
+          "rect": {
+            "x": 0.78,
+            "y": 0.65,
+            "width": 0.09,
+            "height": 0.19
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sideRight": {
+          "rect": {
+            "x": 0.88,
+            "y": 0.02,
+            "width": 0.1,
+            "height": 0.5
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "sleeveRight": {
+          "rect": {
+            "x": 0.24,
+            "y": 0.55,
+            "width": 0.2,
+            "height": 0.31
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "cuffRight": {
+          "rect": {
+            "x": 0.89,
+            "y": 0.65,
+            "width": 0.09,
+            "height": 0.19
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        },
+        "waistband": {
+          "rect": {
+            "x": 0.02,
+            "y": 0.89,
+            "width": 0.96,
+            "height": 0.09
+          },
+          "margin": 0.08,
+          "safePolygon": [
+            [
+              0.08,
+              0.08
+            ],
+            [
+              0.92,
+              0.08
+            ],
+            [
+              0.92,
+              0.92
+            ],
+            [
+              0.08,
+              0.92
+            ]
+          ]
+        }
+      }
+    },
+    "cameras": {
+      "front": {
+        "rotationY": 0,
+        "label": "Frente"
+      },
+      "back": {
+        "rotationY": 3.141592653589793,
+        "label": "Espalda"
+      },
+      "left": {
+        "rotationY": -1.1344640137963142,
+        "label": "Lado izquierdo"
+      },
+      "right": {
+        "rotationY": 1.1344640137963142,
+        "label": "Lado derecho"
+      }
+    }
+  }
+}

@@ -27,10 +27,11 @@ describe('historial del editor', () => {
 
     const layer = useEditorStore.getState().document.layers[0];
     expect(layer.transform).toMatchObject({ scale: 2, x: 0.4, y: 0.6 });
-    expect(useEditorStore.getState().past).toHaveLength(1);
+    // Adding a layer and resizing it are two distinct undoable operations.
+    expect(useEditorStore.getState().past).toHaveLength(2);
 
     useEditorStore.getState().undo();
-    expect(useEditorStore.getState().document.layers).toHaveLength(0);
+    expect(useEditorStore.getState().document.layers[0].transform.scale).toBe(1);
   });
 
   it('limita la escala de redimensionado', () => {

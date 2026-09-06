@@ -25,7 +25,8 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/components/ui/toast';
 import { FONTS, PATTERNS } from '@/lib/atlas';
 import { createAssetRecord } from '@/lib/persistence';
-import { PALETTE, TEMPLATES, ZONE_IDS, ZONE_LABELS, type TextLayer, type ZoneId } from '@/lib/design';
+import { PALETTE, TEMPLATES, ZONE_LABELS, type TextLayer, type ZoneId } from '@/lib/design';
+import { GARMENT_ZONES, supportsZone } from '@/lib/garment-types';
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/store/editor-store';
 
@@ -39,6 +40,7 @@ function Heading({ title, hint }: { title: string; hint?: string }) {
 }
 
 function ZonePicker({ label = 'Zona de la prenda' }: { label?: string }) {
+  const modelId = useEditorStore((state) => state.document.modelId);
   const zone = useEditorStore((state) => state.selectedZone);
   const setZone = useEditorStore((state) => state.setSelectedZone);
   return (
@@ -50,7 +52,7 @@ function ZonePicker({ label = 'Zona de la prenda' }: { label?: string }) {
           <SelectValue>{ZONE_LABELS[zone]}</SelectValue>
         </SelectTrigger>
         <SelectContent alignItemWithTrigger={false}>
-          {ZONE_IDS.map((item) => <SelectItem key={item} value={item}>{ZONE_LABELS[item]}</SelectItem>)}
+          {GARMENT_ZONES[modelId].map((item) => <SelectItem key={item} value={item}>{ZONE_LABELS[item]}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
@@ -283,7 +285,7 @@ function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
         <span className="block truncate text-3xl text-foreground" style={{ fontFamily: font }}>{text || label}</span>
         <span className="mt-2 block text-[10px] uppercase tracking-[.12em] text-muted-foreground">Vista previa</span>
       </div>
-      <Button className="h-11 w-full" onClick={add}>Añadir {label.toLowerCase()} <span className="ml-auto text-xs opacity-70">{layers.length}/20</span></Button>
+      <Button className="h-11 w-full" onClick={add}>Añadir<span className="ml-auto text-xs opacity-70">{layers.length}/20</span></Button>
     </div>
   );
 }
@@ -291,7 +293,6 @@ function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
 function LogoPanel() {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  const zone = useEditorStore((state) => state.selectedZone);
   const addImage = useEditorStore((state) => state.addImageLayer);
   const process = async (file?: File) => {
     if (!file || busy) return;
@@ -341,12 +342,18 @@ function LayersPanel() {
   const center = useEditorStore((state) => state.centerLayer);
   const setZone = useEditorStore((state) => state.setSelectedZone);
   const selected = document.layers.find((layer) => layer.id === selectedId && layer.zone === zone);
+  const retained = document.layers.filter((layer) => !supportsZone(document.modelId, layer.zone));
   const layers = [...document.layers].filter((layer) => layer.zone === zone).sort((a, b) => b.order - a.order);
 
   return (
     <div className="space-y-5">
-      <Heading title={`Capas (${layers.length}/20)`} hint="Ordena, bloquea y edita cada elemento." />
+      <Heading title={`Capas (${document.layers.length}/20)`} hint="Ordena, bloquea y edita cada elemento." />
       <ZonePicker label="Mostrar capas de" />
+      {retained.length > 0 ? <div className="rounded-xl border border-dashed bg-muted p-3 text-xs text-muted-foreground">
+        <p className="font-medium">Conservadas en otra prenda ({retained.length})</p>
+        <p className="mt-1">Reaparecen al volver a una prenda con esa zona.</p>
+        <ul className="mt-2 space-y-1">{retained.map((layer) => <li key={layer.id}>{layer.type === 'text' ? layer.text : layer.name} · {ZONE_LABELS[layer.zone]}</li>)}</ul>
+      </div> : null}
       {layers.length ? <div className="space-y-2">
         {layers.map((layer) => (
           <div key={layer.id} className={cn('rounded-xl border bg-card p-2 transition-colors', selectedId === layer.id && 'border-sky-500 bg-accent/45 ring-1 ring-sky-500')}>
@@ -354,6 +361,7 @@ function LayersPanel() {
               <GripVertical className="size-4 text-muted-foreground" />
               <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
                 {layer.type === 'image' && assets[layer.assetId]?.previewUrl ? (
+                  // oxlint-disable-next-line next/no-img-element -- Local blob previews cannot use the image optimization service.
                   <img className="size-full object-contain" src={assets[layer.assetId].previewUrl} alt={`Miniatura de ${layer.name}`} draggable={false} />
                 ) : layer.type === 'image' ? <FileImage className="size-4" /> : <span className="font-semibold">T</span>}
               </span>
@@ -393,7 +401,7 @@ function LayersPanel() {
             <Label>Zona</Label>
             <Select value={selected.zone} disabled={selected.locked} onValueChange={(value) => { if (value) { update(selected.id, { zone: value as ZoneId }); setZone(value as ZoneId); } }}>
               <SelectTrigger className="h-11 w-full bg-card"><SelectValue>{ZONE_LABELS[selected.zone]}</SelectValue></SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>{ZONE_IDS.map((zone) => <SelectItem key={zone} value={zone}>{ZONE_LABELS[zone]}</SelectItem>)}</SelectContent>
+              <SelectContent alignItemWithTrigger={false}>{GARMENT_ZONES[document.modelId].map((zone) => <SelectItem key={zone} value={zone}>{ZONE_LABELS[zone]}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <NumberControl disabled={selected.locked} label="Posición X" value={selected.transform.x * 100} min={0} max={100} step={1} suffix="%" onChange={(value) => update(selected.id, { transform: { x: value / 100 } }, false)} />

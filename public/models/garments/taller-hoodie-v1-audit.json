@@ -1,0 +1,28 @@
+{
+  "triangles": 31598,
+  "counts": {
+    "sideRight": 1286,
+    "back": 2139,
+    "waistband": 2093,
+    "sleeveRight": 4299,
+    "front": 4554,
+    "hood": 10077,
+    "cuffRight": 893,
+    "sideLeft": 1025,
+    "sleeveLeft": 4383,
+    "cuffLeft": 849
+  },
+  "coverage": {
+    "sideRight": 376606,
+    "back": 1796601,
+    "waistband": 1230813,
+    "sleeveRight": 718726,
+    "front": 2038396,
+    "hood": 705988,
+    "cuffRight": 66964,
+    "sideLeft": 326052,
+    "sleeveLeft": 712852,
+    "cuffLeft": 72603
+  },
+  "crossZoneOverlaps": 0
+}

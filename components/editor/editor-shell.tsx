@@ -3,8 +3,6 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Blend,
-  CircleDotDashed,
   Cloud,
   CloudAlert,
   Download,
@@ -16,14 +14,11 @@ import {
   Palette,
   Redo2,
   Save,
-  Shapes,
   Shirt,
-  Sparkles,
   Moon,
   Sun,
   Type,
   Undo2,
-  UserRound,
 } from 'lucide-react';
 
 import {
@@ -36,7 +31,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast, Toaster } from '@/components/ui/toast';
@@ -46,6 +40,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { GarmentPicker } from '@/components/editor/garment-picker';
+import { getActiveCapture } from '@/lib/stage-capture';
+import { getGarment } from '@/lib/garments';
 import { ToolPanelContent } from '@/components/editor/tool-panel';
 import { clearSession } from '@/lib/persistence';
 import { downloadBlob, exportProject, importProject } from '@/lib/project-io';
@@ -57,7 +54,7 @@ import { useWebMcp } from '@/hooks/use-webmcp';
 import { useEditorStore } from '@/store/editor-store';
 
 const ShirtStage = dynamic(
-  () => import('./shirt-stage').then((module) => module.ShirtStage),
+  () => import('./garment-stage').then((module) => module.GarmentStage),
   {
     ssr: false,
     loading: () => (
@@ -264,6 +261,7 @@ export function EditorShell() {
   const redo = useEditorStore((state) => state.redo);
   const canUndo = useEditorStore((state) => state.past.length > 0);
   const canRedo = useEditorStore((state) => state.future.length > 0);
+  const stageReady = useEditorStore((state) => state.stageModelId === state.document.modelId && state.stageStatus === 'ready');
   const exporting = useEditorStore((state) => state.exportStatus === 'working');
   const setExportStatus = useEditorStore((state) => state.setExportStatus);
   const newDesign = useEditorStore((state) => state.newDesign);
@@ -288,6 +286,10 @@ export function EditorShell() {
 
   const handleExport = useCallback(async () => {
     if (useEditorStore.getState().exportStatus === 'working') return;
+    const initial = useEditorStore.getState();
+    if (initial.stageStatus !== 'ready' || initial.stageModelId !== initial.document.modelId) throw new Error('Espera a que termine de cargar la prenda.');
+    const capturedDocument = structuredClone(initial.document);
+    const capturedAssets = { ...initial.assets };
     setExportStatus('working');
     const previousSelection = useEditorStore.getState().selectedLayerId;
     useEditorStore.getState().selectLayer(null);
@@ -295,11 +297,11 @@ export function EditorShell() {
       await new Promise<void>((resolve) =>
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       );
-      const { captureShirtViews } = await import('./shirt-stage');
-      const views = await captureShirtViews();
-      const state = useEditorStore.getState();
-      const zip = await exportProject(state.document, state.assets, views);
-      downloadBlob(zip, 'diseno-camiseta.zip');
+      const views = await getActiveCapture(capturedDocument.modelId)();
+      const current = useEditorStore.getState().document;
+      if (current !== initial.document) throw new Error('El diseño cambió durante la captura. Exporta de nuevo.');
+      const zip = await exportProject(capturedDocument, capturedAssets, views);
+      downloadBlob(zip, `diseno-${getGarment(capturedDocument.modelId).label.toLowerCase()}.zip`);
       toast.add({
         title: 'Proyecto exportado',
         description:
@@ -508,7 +510,7 @@ export function EditorShell() {
                   exporting ? 'Preparando exportación' : 'Exportar diseño'
                 }
                 className="h-10 bg-sidebar px-3 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                disabled={exporting}
+                disabled={exporting || !stageReady}
                 onClick={() => void handleExport().catch(() => undefined)}
               >
                 {exporting ? (
@@ -530,6 +532,7 @@ export function EditorShell() {
               />
             </div>
           </header>
+          <div className="z-10 flex shrink-0 items-center border-b bg-background px-3 py-2 sm:px-5"><GarmentPicker /></div>
 
           <div className="flex min-h-0 flex-1">
             <ToolRail />

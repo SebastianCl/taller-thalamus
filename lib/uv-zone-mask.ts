@@ -1,4 +1,5 @@
-import { ZONE_IDS, type ZoneId } from '@/lib/design';
+import type { ZoneId } from '@/lib/design';
+import { ALL_ZONE_IDS as ZONE_IDS } from '@/lib/garment-types';
 import { MODEL_MANIFEST, type NormalizedRect } from '@/lib/model-manifest';
 
 export type UvZoneMaskLookup = {
@@ -17,20 +18,24 @@ export function uvMaskGutter(size: number) {
 }
 
 const ZONE_FROM_CODE = [null, ...ZONE_IDS] as const;
-const COLOR_TO_CODE = new Map<number, number>();
-
-for (const zone of ZONE_IDS) {
-  for (const [red, green, blue] of MODEL_MANIFEST.atlas.mask.colors[zone]) {
-    COLOR_TO_CODE.set((red << 16) | (green << 8) | blue, ZONE_MASK_CODE[zone]);
+function colorCodes(manifest: typeof MODEL_MANIFEST) {
+  const codes = new Map<number, number>();
+  for (const zone of ZONE_IDS) {
+    for (const [red, green, blue] of manifest.atlas.mask.colors[zone] ?? []) {
+      codes.set((red << 16) | (green << 8) | blue, ZONE_MASK_CODE[zone]);
+    }
   }
+  return codes;
 }
 
 export function decodeUvZoneMaskPixels(
   pixels: Uint8ClampedArray,
   width: number,
   height: number,
+  manifest = MODEL_MANIFEST,
 ): UvZoneMaskLookup {
   if (pixels.length !== width * height * 4) throw new Error('La máscara UV tiene dimensiones inválidas.');
+  const COLOR_TO_CODE = colorCodes(manifest);
   const zones = new Uint8Array(width * height);
   for (let pixel = 0, offset = 0; pixel < zones.length; pixel += 1, offset += 4) {
     zones[pixel] = COLOR_TO_CODE.get((pixels[offset] << 16) | (pixels[offset + 1] << 8) | pixels[offset + 2]) ?? 0;
@@ -146,19 +151,20 @@ export function deriveSideZoneRects(mask: UvZoneMaskLookup): Partial<Record<Zone
   return rects;
 }
 
-export function createUvZoneMaskLookup(image: CanvasImageSource, size: number): UvZoneMaskLookup {
+export function createUvZoneMaskLookup(image: CanvasImageSource, size: number, manifest = MODEL_MANIFEST): UvZoneMaskLookup {
   const canvas = window.document.createElement('canvas');
   canvas.width = canvas.height = size;
   const context = canvas.getContext('2d', { willReadFrequently: true });
   if (!context) throw new Error('No se pudo preparar la máscara UV.');
   context.imageSmoothingEnabled = false;
   context.drawImage(image, 0, 0, size, size);
-  const decoded = decodeUvZoneMaskPixels(context.getImageData(0, 0, size, size).data, size, size);
+  const decoded = decodeUvZoneMaskPixels(context.getImageData(0, 0, size, size).data, size, size, manifest);
+  if (manifest.modelId !== 'taller-sport-v1') return padUvZoneMask({ ...decoded, rects: manifest.atlas.mask.rects }, uvMaskGutter(size));
   const expanded = expandTorsoSideZones(decoded, MODEL_MANIFEST.atlas.mask.torsoSideExpansion);
   return padUvZoneMask({ ...expanded, rects: deriveSideZoneRects(expanded) }, uvMaskGutter(size));
 }
 
-export function loadUvZoneMask(size: number, signal?: AbortSignal): Promise<UvZoneMaskLookup> {
+export function loadUvZoneMask(size: number, signal?: AbortSignal, manifest = MODEL_MANIFEST): Promise<UvZoneMaskLookup> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     const abort = () => {
@@ -174,10 +180,10 @@ export function loadUvZoneMask(size: number, signal?: AbortSignal): Promise<UvZo
       signal?.removeEventListener('abort', abort);
       if (signal?.aborted) return;
       try {
-        if (image.naturalWidth !== MODEL_MANIFEST.atlas.mask.sourceSize || image.naturalHeight !== MODEL_MANIFEST.atlas.mask.sourceSize) {
+        if (image.naturalWidth !== manifest.atlas.mask.sourceSize || image.naturalHeight !== manifest.atlas.mask.sourceSize) {
           throw new Error('La máscara UV no coincide con las dimensiones declaradas del modelo.');
         }
-        resolve(createUvZoneMaskLookup(image, size));
+        resolve(createUvZoneMaskLookup(image, size, manifest));
       } catch (error) {
         reject(error);
       }
@@ -186,7 +192,7 @@ export function loadUvZoneMask(size: number, signal?: AbortSignal): Promise<UvZo
       signal?.removeEventListener('abort', abort);
       reject(new Error('No se pudo cargar la máscara UV del modelo.'));
     };
-    image.src = MODEL_MANIFEST.atlas.mask.url;
+    image.src = manifest.atlas.mask.url;
   });
 }
 
