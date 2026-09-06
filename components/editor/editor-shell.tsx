@@ -174,7 +174,7 @@ function MobileTools({ onSelect }: { onSelect: () => void }) {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   return (
     <nav
-      className="safe-bottom flex h-[68px] shrink-0 items-start gap-1 overflow-x-auto border-t bg-white px-2 pt-1.5 md:hidden"
+      className="safe-bottom flex h-[68px] shrink-0 items-start justify-center gap-1 overflow-x-auto border-t bg-white px-2 pt-1.5 md:hidden"
       aria-label="Herramientas de diseño"
     >
       {TOOLS.map(({ id, label, icon: Icon }) => (
