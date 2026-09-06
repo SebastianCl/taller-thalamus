@@ -254,12 +254,12 @@ function GradientPanel() {
 }
 
 function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
-  const [text, setText] = useState(subtype === 'name' ? 'GARCÍA' : subtype === 'number' ? '10' : 'TEXTO');
+  const [text, setText] = useState(subtype === 'name' ? 'GARCÍA' : subtype === 'number' ? '10' : '');
   const [font, setFont] = useState(subtype === 'number' ? 'Anton' : subtype === 'name' ? 'Oswald' : 'Inter');
   const addText = useEditorStore((state) => state.addTextLayer);
   const zone = useEditorStore((state) => state.selectedZone);
   const layers = useEditorStore((state) => state.document.layers);
-  const label = subtype === 'name' ? 'Nombre' : subtype === 'number' ? 'Número' : 'Texto libre';
+  const label = subtype === 'name' ? 'Nombre' : subtype === 'number' ? 'Número' : 'Texto';
   const add = () => {
     const id = addText(subtype, text, font);
     if (!id) toast.add({ title: text.trim() ? 'Límite alcanzado' : 'Escribe un texto', description: text.trim() ? 'Puedes usar hasta 20 elementos por diseño.' : 'El campo no puede estar vacío.', type: 'warning' });
@@ -273,7 +273,7 @@ function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
         <Input id={`copy-${subtype}`} className="h-11" value={text} maxLength={subtype === 'number' ? 3 : 120} inputMode={subtype === 'number' ? 'numeric' : 'text'} onChange={(event) => setText(subtype === 'number' ? event.target.value.replace(/\D/g, '').slice(0, 3) : subtype === 'name' ? event.target.value.toUpperCase() : event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') add(); }} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor={`font-${subtype}`}>Tipografía OFL</Label>
+        <Label htmlFor={`font-${subtype}`}>Tipografía</Label>
         <Select value={font} onValueChange={(value) => { if (value) setFont(value); }}>
           <SelectTrigger id={`font-${subtype}`} className="h-11 w-full"><SelectValue /></SelectTrigger>
           <SelectContent alignItemWithTrigger={false}>{FONTS.map((item) => <SelectItem key={item.id} value={item.id}><span style={{ fontFamily: item.id }}>{item.name}</span></SelectItem>)}</SelectContent>
@@ -377,6 +377,17 @@ function LayersPanel() {
 
       {selected ? (
         <div className="space-y-5 rounded-2xl border bg-muted p-4">
+          {selected.type === 'text' ? (
+            <div className="space-y-4 pt-4">
+              <div className="space-y-2"><Label htmlFor="layer-content">Texto</Label><Input id="layer-content" className="h-11" value={selected.text} maxLength={120} disabled={selected.locked} onChange={(event) => update(selected.id, { text: event.target.value } as never)} /></div>
+              <div className="space-y-2"><Label htmlFor="layer-font">Tipografía</Label><Select value={selected.font} disabled={selected.locked} onValueChange={(font) => update(selected.id, { font } as never)}><SelectTrigger id="layer-font" className="h-11 w-full"><SelectValue /></SelectTrigger><SelectContent alignItemWithTrigger={false}>{FONTS.map((font) => <SelectItem key={font.id} value={font.id}>{font.name}</SelectItem>)}</SelectContent></Select></div>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-2 text-xs font-medium">Color<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.color} onChange={(event) => update(selected.id, { color: event.target.value.toUpperCase() } as never)} /></label>
+                <label className="space-y-2 text-xs font-medium">Fondo<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.background ?? '#000000'} onChange={(event) => update(selected.id, { background: event.target.value.toUpperCase() } as never)} /></label>
+              </div>
+              <div className="flex min-h-11 items-center justify-between rounded-lg border bg-card px-3 text-sm">Usar fondo<Switch disabled={selected.locked} checked={selected.background !== null} onCheckedChange={(checked) => update(selected.id, { background: checked ? '#000000' : null } as never)} aria-label="Usar fondo en el texto" /></div>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between"><Heading title="Transformar" /><Button variant="outline" size="sm" className="h-9" disabled={selected.locked} onClick={() => center(selected.id)}><AlignCenter /> Centrar</Button></div>
           <div className="space-y-2">
             <Label>Zona</Label>
@@ -389,17 +400,6 @@ function LayersPanel() {
           <NumberControl disabled={selected.locked} label="Posición Y" value={selected.transform.y * 100} min={0} max={100} step={1} suffix="%" onChange={(value) => update(selected.id, { transform: { y: value / 100 } }, false)} />
           <NumberControl disabled={selected.locked} label="Tamaño" value={selected.transform.scale * 100} min={20} max={260} step={1} suffix="%" onChange={(value) => update(selected.id, { transform: { scale: value / 100 } }, false)} />
           <NumberControl disabled={selected.locked} label="Rotación" value={selected.transform.rotation} min={-180} max={180} step={1} suffix="°" onChange={(value) => update(selected.id, { transform: { rotation: value } }, false)} />
-          {selected.type === 'text' ? (
-            <div className="space-y-4 border-t pt-4">
-              <div className="space-y-2"><Label htmlFor="layer-content">Contenido</Label><Input id="layer-content" className="h-11" value={selected.text} maxLength={120} disabled={selected.locked} onChange={(event) => update(selected.id, { text: event.target.value } as never)} /></div>
-              <div className="space-y-2"><Label htmlFor="layer-font">Tipografía</Label><Select value={selected.font} disabled={selected.locked} onValueChange={(font) => update(selected.id, { font } as never)}><SelectTrigger id="layer-font" className="h-11 w-full"><SelectValue /></SelectTrigger><SelectContent alignItemWithTrigger={false}>{FONTS.map((font) => <SelectItem key={font.id} value={font.id}>{font.name}</SelectItem>)}</SelectContent></Select></div>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-2 text-xs font-medium">Color<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.color} onChange={(event) => update(selected.id, { color: event.target.value.toUpperCase() } as never)} /></label>
-                <label className="space-y-2 text-xs font-medium">Fondo<input type="color" disabled={selected.locked} className="block h-11 w-full rounded-lg border bg-card p-1" value={selected.background ?? '#000000'} onChange={(event) => update(selected.id, { background: event.target.value.toUpperCase() } as never)} /></label>
-              </div>
-              <div className="flex min-h-11 items-center justify-between rounded-lg border bg-card px-3 text-sm">Usar fondo<Switch disabled={selected.locked} checked={selected.background !== null} onCheckedChange={(checked) => update(selected.id, { background: checked ? '#000000' : null } as never)} aria-label="Usar fondo en el texto" /></div>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </div>
