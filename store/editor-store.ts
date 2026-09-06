@@ -157,7 +157,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   past: [],
   future: [],
   gestureStart: null,
-  activeTool: 'color',
+  activeTool: 'type',
   selectedZone: 'front',
   selectedLayerId: null,
   view: 'front',
@@ -195,7 +195,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   hydrate: (document, assets) => set({ document, assets, past: [], future: [], selectedZone: 'front', selectedLayerId: null, gestureStart: null, stageModelId: null, stageStatus: 'loading', autosaveStatus: 'saved' }),
   newDesign: () => {
     for (const asset of Object.values(get().assets)) URL.revokeObjectURL(asset.previewUrl);
-    set({ document: createDocument(get().document.modelId), assets: {}, past: [], future: [], selectedLayerId: null, selectedZone: 'front', activeTool: 'color' });
+    set({ document: createDocument(get().document.modelId), assets: {}, past: [], future: [], selectedLayerId: null, selectedZone: 'front', activeTool: 'type' });
   },
   applyTemplate: (templateId) => {
     if (!TEMPLATES.some((template) => template.id === templateId)) return;
