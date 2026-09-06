@@ -257,7 +257,7 @@ function ThemeToggle() {
 
 export function EditorShell() {
   const [newDialog, setNewDialog] = useState(false);
-  const [mobileToolsOpen, setMobileToolsOpen] = useState(true);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
   const saveNow = useAutosave();
   const undo = useEditorStore((state) => state.undo);

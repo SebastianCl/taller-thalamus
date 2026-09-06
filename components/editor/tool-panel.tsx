@@ -254,7 +254,7 @@ function GradientPanel() {
 }
 
 function TextPanel({ subtype }: { subtype: TextLayer['subtype'] }) {
-  const [text, setText] = useState(subtype === 'name' ? 'GARCÍA' : subtype === 'number' ? '10' : 'TU EQUIPO');
+  const [text, setText] = useState(subtype === 'name' ? 'GARCÍA' : subtype === 'number' ? '10' : 'TEXTO');
   const [font, setFont] = useState(subtype === 'number' ? 'Anton' : subtype === 'name' ? 'Oswald' : 'Inter');
   const addText = useEditorStore((state) => state.addTextLayer);
   const zone = useEditorStore((state) => state.selectedZone);
