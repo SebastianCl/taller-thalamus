@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Blend,
   CircleDotDashed,
-  ChevronDown,
   Cloud,
   CloudAlert,
   Download,
@@ -131,15 +130,7 @@ function ToolRail() {
   );
 }
 
-function ContextPanel({
-  mobile = false,
-  onClose,
-}: {
-  mobile?: boolean;
-  onClose?: () => void;
-}) {
-  const activeTool = useEditorStore((state) => state.activeTool);
-  const label = TOOLS.find((tool) => tool.id === activeTool)?.label;
+function ContextPanel({ mobile = false }: { mobile?: boolean }) {
   return (
     <aside
       className={cn(
@@ -150,19 +141,6 @@ function ContextPanel({
       )}
       aria-label="Opciones de diseño"
     >
-      {mobile && (
-        <div className="flex shrink-0 items-center justify-between border-b px-4 py-2">
-          <span className="text-sm font-medium text-foreground">{label}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            aria-label="Cerrar herramientas"
-          >
-            <ChevronDown className="size-4" /> Ocultar
-          </Button>
-        </div>
-      )}
       <ScrollArea className="min-h-0 flex-1">
         <div className={cn('space-y-7', mobile ? 'p-4 pb-8' : 'p-5 pb-28')}>
           <ToolPanelContent />
@@ -172,7 +150,11 @@ function ContextPanel({
   );
 }
 
-function MobileTools({ onSelect }: { onSelect: () => void }) {
+function MobileTools({
+  onToggle,
+}: {
+  onToggle: (isActiveTool: boolean) => void;
+}) {
   const activeTool = useEditorStore((state) => state.activeTool);
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   return (
@@ -185,12 +167,14 @@ function MobileTools({ onSelect }: { onSelect: () => void }) {
           key={id}
           type="button"
           onClick={() => {
+            onToggle(activeTool === id);
             setActiveTool(id);
-            onSelect();
           }}
           className={cn(
             'flex min-h-12 min-w-[64px] flex-col items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium',
-            activeTool === id ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
+            activeTool === id
+              ? 'bg-accent text-accent-foreground'
+              : 'text-muted-foreground',
           )}
           aria-current={activeTool === id ? 'page' : undefined}
           aria-pressed={activeTool === id}
@@ -554,15 +538,14 @@ export function EditorShell() {
               <div className="min-h-0 flex-1">
                 <ShirtStage />
               </div>
-              {mobileToolsOpen && (
-                <ContextPanel
-                  mobile
-                  onClose={() => setMobileToolsOpen(false)}
-                />
-              )}
+              {mobileToolsOpen && <ContextPanel mobile />}
             </div>
           </div>
-          <MobileTools onSelect={() => setMobileToolsOpen(true)} />
+          <MobileTools
+            onToggle={(isActiveTool) =>
+              setMobileToolsOpen((isOpen) => (isActiveTool ? !isOpen : true))
+            }
+          />
         </main>
 
         <AlertDialog open={newDialog} onOpenChange={setNewDialog}>
