@@ -71,6 +71,8 @@ type EditorState = {
   moveLayerOrder: (id: string, direction: -1 | 1) => void;
   centerLayer: (id: string) => void;
   beginGesture: () => void;
+  cancelGesture: () => void;
+  updateLayerTransformLive: (id: string, transform: Partial<LayerTransform>) => void;
   updateLayerLive: (id: string, x: number, y: number) => void;
   updateLayerResizeLive: (id: string, scale: number, x: number, y: number) => void;
   endGesture: () => void;
@@ -183,7 +185,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }));
   },
   setActiveTool: (activeTool) => set({ activeTool }),
-  setSelectedZone: (selectedZone) => { if (supportsZone(get().document.modelId, selectedZone)) set({ selectedZone }); },
+  setSelectedZone: (selectedZone) => {
+    if (supportsZone(get().document.modelId, selectedZone)) {
+      if (selectedZone !== get().selectedZone) get().endGesture();
+      set({ selectedZone });
+    }
+  },
   selectLayer: (selectedLayerId) => {
     const state = get();
     if (!selectedLayerId || state.document.layers.some((layer) => layer.id === selectedLayerId && supportsZone(state.document.modelId, layer.zone))) set({ selectedLayerId });
@@ -195,7 +202,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   hydrate: (document, assets) => set({ document, assets, past: [], future: [], selectedZone: 'front', selectedLayerId: null, gestureStart: null, stageModelId: null, stageStatus: 'loading', autosaveStatus: 'saved' }),
   newDesign: () => {
     for (const asset of Object.values(get().assets)) URL.revokeObjectURL(asset.previewUrl);
-    set({ document: createDocument(get().document.modelId), assets: {}, past: [], future: [], selectedLayerId: null, selectedZone: 'front', activeTool: 'type' });
+    set({ document: createDocument(get().document.modelId), assets: {}, past: [], future: [], gestureStart: null, selectedLayerId: null, selectedZone: 'front', activeTool: 'type' });
   },
   applyTemplate: (templateId) => {
     if (!TEMPLATES.some((template) => template.id === templateId)) return;
@@ -321,6 +328,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     return commit(state, (document) => patchLayer(document, id, { transform: { x: 0.5, y: 0.5 } }));
   }),
   beginGesture: () => set((state) => ({ gestureStart: state.gestureStart ?? structuredClone(state.document) })),
+  cancelGesture: () => set((state) => state.gestureStart
+    ? { document: state.gestureStart, gestureStart: null }
+    : state),
+  updateLayerTransformLive: (id, transform) => set((state) => {
+    const layer = state.document.layers.find((item) => item.id === id);
+    if (!state.gestureStart || state.exportStatus === 'working' || !layer || layer.locked || !layer.visible || !supportsZone(state.document.modelId, layer.zone)) return state;
+    if (Object.values(transform).some((value) => !Number.isFinite(value))) return state;
+    const document = structuredClone(state.document);
+    patchLayer(document, id, { transform });
+    if (JSON.stringify(document) === JSON.stringify(state.document)) return state;
+    return { document: stamp(document) };
+  }),
   updateLayerLive: (id, x, y) => set((state) => {
     const layer = state.document.layers.find((item) => item.id === id);
     if (!layer || layer.locked || !supportsZone(state.document.modelId, layer.zone)) return state;

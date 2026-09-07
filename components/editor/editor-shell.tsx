@@ -43,6 +43,7 @@ import {
 import { getActiveCapture } from '@/lib/stage-capture';
 import { getGarment } from '@/lib/garments';
 import { ToolPanelContent } from '@/components/editor/tool-panel';
+import { ZoneEditor } from '@/components/editor/zone-editor';
 import { clearSession } from '@/lib/persistence';
 import { downloadBlob, exportProject, importProject } from '@/lib/project-io';
 import { type ToolId } from '@/lib/design';
@@ -127,13 +128,13 @@ function ToolRail() {
   );
 }
 
-function ContextPanel({ mobile = false }: { mobile?: boolean }) {
+function ContextPanel({ mobile = false, compact = false }: { mobile?: boolean; compact?: boolean }) {
   return (
     <aside
       className={cn(
         'relative z-10 flex shrink-0 flex-col bg-card text-card-foreground',
         mobile
-          ? 'h-[42dvh] min-h-0 border-t md:hidden'
+          ? compact ? 'h-[32dvh] min-h-0 border-t md:hidden' : 'h-[42dvh] min-h-0 border-t md:hidden'
           : 'hidden w-[318px] border-r md:flex',
       )}
       aria-label="Opciones de diseño"
@@ -253,6 +254,7 @@ function ThemeToggle() {
 }
 
 export function EditorShell() {
+  const [editorView, setEditorView] = useState<'2d' | '3d'>('3d');
   const [newDialog, setNewDialog] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
@@ -287,6 +289,7 @@ export function EditorShell() {
   const handleExport = useCallback(async () => {
     if (useEditorStore.getState().exportStatus === 'working') return;
     const initial = useEditorStore.getState();
+    initial.endGesture();
     if (initial.stageStatus !== 'ready' || initial.stageModelId !== initial.document.modelId) throw new Error('Espera a que termine de cargar la prenda.');
     const capturedDocument = structuredClone(initial.document);
     const capturedAssets = { ...initial.assets };
@@ -371,6 +374,7 @@ export function EditorShell() {
       if (target !== document.body && !target?.closest('[data-editor-stage]'))
         return;
       const state = useEditorStore.getState();
+      if (state.exportStatus === 'working') return;
       const layer = state.document.layers.find(
         (item) => item.id === state.selectedLayerId,
       );
@@ -536,10 +540,14 @@ export function EditorShell() {
             <ToolRail />
             <ContextPanel />
             <div className="flex min-w-0 flex-1 flex-col">
-              <div className="min-h-0 flex-1">
-                <ShirtStage />
+              <fieldset className="flex shrink-0 gap-1 border-b bg-card p-2" aria-label="Vista del editor">
+                {(['3d', '2d'] as const).map((view) => <Button key={view} size="sm" variant={editorView === view ? 'secondary' : 'ghost'} aria-pressed={editorView === view} disabled={exporting} onClick={() => { useEditorStore.getState().endGesture(); setEditorView(view); }}>{view.toUpperCase()}</Button>)}
+              </fieldset>
+              <div className="relative min-h-0 flex-1">
+                <div className="absolute inset-0" aria-hidden={editorView === '2d'} inert={editorView === '2d'}><ShirtStage /></div>
+                {editorView === '2d' && <div className="absolute inset-0 z-10 bg-background"><ZoneEditor /></div>}
               </div>
-              {mobileToolsOpen && <ContextPanel mobile />}
+              {mobileToolsOpen && <ContextPanel mobile compact={editorView === '2d'} />}
             </div>
           </div>
           <MobileTools

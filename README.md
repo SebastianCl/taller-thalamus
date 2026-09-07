@@ -7,6 +7,7 @@ navegador e importar o exportar proyectos completos.
 ## Funcionalidades
 
 - Visor 3D interactivo basado en React Three Fiber y Three.js.
+- Editor 2D por zona, sincronizado con el visor 3D y el historial.
 - Edición por zonas de la camiseta: frente, espalda, mangas, cuello y
   laterales.
 - Herramientas para color, texto, imágenes y capas.
@@ -87,6 +88,25 @@ modelo activo, además de las capas de zonas temporalmente ausentes.
 En el visor, las flechas mueven la capa seleccionada. `Shift` aumenta el paso
 de movimiento. `Delete` o `Backspace` elimina la capa y `Escape` cancela la
 selección.
+
+### Edición 2D por zona
+
+Alterna entre **3D** y **2D** con los botones sobre el visor. En 2D, elige una
+zona y selecciona una capa con clic o toque. Arrastra para moverla, usa las
+esquinas para escalar proporcionalmente y el círculo superior para rotarla.
+Cada gesto se deshace en una sola operación; `Escape` cancela un gesto activo.
+
+**Guías y ajuste** alinea el centro de la capa con los ejes de la zona cuando
+queda a menos de 8 píxeles visibles. El zoom va del 50 % al 400 %; activa
+**Desplazar** para recorrer el lienzo o **Ajustar zona** para volver al encuadre
+inicial. Los controles numéricos, las capas y el autoguardado son compartidos
+con el editor 3D. En móvil, pulsa de nuevo la herramienta activa para cerrar
+su panel y ampliar el lienzo.
+
+La superficie muestra el área de diseño y su límite útil, sin medidas de
+confección. Las regiones secundarias de una zona repiten el mismo diseño en
+3D. **Exportar** funciona también desde 2D y conserva las cuatro vistas PNG;
+el zoom, las guías y los controles de selección no se incluyen en el ZIP.
 
 ## Estructura del proyecto
 

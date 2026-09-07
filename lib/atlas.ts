@@ -49,7 +49,7 @@ function toPixelCoverageRect(rect: { x: number; y: number; width: number; height
   return { x, y, width: right - x, height: bottom - y };
 }
 
-function pixelRects(zone: ZoneId, size: number, zoneMask?: UvZoneMaskLookup | null, manifest = MODEL_MANIFEST): PixelRect[] {
+export function pixelRects(zone: ZoneId, size: number, zoneMask?: UvZoneMaskLookup | null, manifest = MODEL_MANIFEST): PixelRect[] {
   const config = manifest.atlas.zones[zone];
   const runtimeRects = zoneMask?.rects?.[zone];
   const rects = runtimeRects?.length ? runtimeRects : [config.rect, ...(config.secondaryRects ?? [])];
@@ -321,6 +321,7 @@ export function renderAtlas(
   selectedLayerId?: string | null,
   zoneMask?: UvZoneMaskLookup | null,
   manifest: ModelManifest = MODEL_MANIFEST,
+  onlyZone?: ZoneId,
 ) {
   const context = canvas.getContext('2d', { alpha: false });
   if (!context) return;
@@ -351,12 +352,13 @@ export function renderAtlas(
   };
 
   if (!zoneMask || zoneMask.width !== size || zoneMask.height !== size) {
-    for (const zone of activeZones) drawZone(context, zone);
+    for (const zone of activeZones) if (!onlyZone || zone === onlyZone) drawZone(context, zone);
     return;
   }
 
   const paths = maskPathsFor(zoneMask);
   for (const zone of activeZones) {
+    if (onlyZone && zone !== onlyZone) continue;
     context.save();
     context.clip(paths[zone]);
     context.fillStyle = document.zones[zone].color;
