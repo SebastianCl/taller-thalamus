@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
 } from 'react';
 import { Button } from '@/components/ui/button';
 import { Layers3, ZoomIn, ZoomOut } from 'lucide-react';
@@ -405,6 +406,13 @@ function ZoneCanvas() {
     }
   }
 
+  function wheel(event: ReactWheelEvent<HTMLCanvasElement>) {
+    if (!ready || exporting || gesturing) return;
+    event.preventDefault();
+    const factor = event.deltaY < 0 ? 1.1 : 0.9;
+    setZoom((value) => Math.min(4, Math.max(0.5, value * factor)));
+  }
+
   return (
     <section
       className="relative flex h-full min-h-0 flex-col bg-muted/40"
@@ -419,6 +427,7 @@ function ZoneCanvas() {
           className="absolute inset-0 h-full w-full touch-none outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500"
           onPointerDown={pointerDown}
           onPointerMove={pointerMove}
+          onWheel={wheel}
           onPointerUp={(event) => {
             if (gesture.current?.pointerId === event.pointerId) finish();
           }}
@@ -522,17 +531,7 @@ function ZoneCanvas() {
           </TooltipTrigger>
           <TooltipContent side="left">Alejar</TooltipContent>
         </Tooltip>
-        <output
-          className="py-1 text-center text-[10px] text-muted-foreground"
-          aria-label="Zoom 2D"
-        >
-          {Math.round(zoom * 100)} %
-        </output>
       </StageToolbar>
-      <p className="border-t bg-card px-3 py-2 text-xs text-muted-foreground">
-        Área útil delimitada · Arrastra las esquinas para escalar y el círculo
-        para rotar. Escape cancela.
-      </p>
     </section>
   );
 }

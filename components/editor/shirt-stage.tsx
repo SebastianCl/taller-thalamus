@@ -803,9 +803,9 @@ export function ShirtStage() {
 
       <StageToolbar>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Restablecer vista" onClick={() => { setView('front'); controlsRef.current?.reset(); }} />}><Home /></TooltipTrigger><TooltipContent side="left">Restablecer vista</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Acercar cámara" onClick={() => zoom(0.82)} />}><ZoomIn /></TooltipTrigger><TooltipContent side="left">Acercar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Alejar cámara" onClick={() => zoom(1.22)} />}><ZoomOut /></TooltipTrigger><TooltipContent side="left">Alejar</TooltipContent></Tooltip>
-        <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
       </StageToolbar>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-sidebar-border bg-sidebar/90 p-1 text-sidebar-foreground shadow-lg backdrop-blur md:flex">

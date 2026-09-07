@@ -1028,6 +1028,21 @@ export function NewGarmentStage() {
               <Button
                 variant="ghost"
                 size="icon-lg"
+                aria-label="Girar"
+                onClick={() => setView(view === 'front' ? 'back' : 'front')}
+              />
+            }
+          >
+            <RefreshCw />
+          </TooltipTrigger>
+          <TooltipContent side="left">Girar 180°</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-lg"
                 aria-label="Acercar cámara"
                 onClick={() => zoom(0.82)}
               />
@@ -1051,21 +1066,6 @@ export function NewGarmentStage() {
             <ZoomOut />
           </TooltipTrigger>
           <TooltipContent side="left">Alejar</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                aria-label="Girar"
-                onClick={() => setView(view === 'front' ? 'back' : 'front')}
-              />
-            }
-          >
-            <RefreshCw />
-          </TooltipTrigger>
-          <TooltipContent side="left">Girar 180°</TooltipContent>
         </Tooltip>
       </StageToolbar>
 
