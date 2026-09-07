@@ -1,37 +1,37 @@
 {
   "sourceSha256": "9128a41f38398a6daf40aa77c5e485775b45b82c22bd3c10b5b938d0361d70d5",
-  "sourceTriangles": 75264,
+  "sourceTriangles": 54592,
   "removedStitchTriangles": 0,
-  "triangles": 20114,
+  "triangles": 14318,
   "counts": {
-    "sideLeft": 3308,
-    "front": 2800,
-    "back": 2954,
-    "sideRight": 3308,
+    "sideLeft": 1781,
+    "front": 1474,
+    "back": 1538,
+    "sideRight": 1781,
     "armholeLeft": 2464,
     "collar": 2816,
     "armholeRight": 2464
   },
   "optimization": {
     "sideLeft": {
-      "sourceTriangles": 13234,
-      "triangles": 3308,
-      "error": 0.00041922711534425616
+      "sourceTriangles": 7131,
+      "triangles": 1781,
+      "error": 0.0004366807988844812
     },
     "front": {
-      "sourceTriangles": 11204,
-      "triangles": 2800,
-      "error": 0.0009750712779350579
+      "sourceTriangles": 5900,
+      "triangles": 1474,
+      "error": 0.0009687321144156158
     },
     "back": {
-      "sourceTriangles": 11816,
-      "triangles": 2954,
-      "error": 0.0007906245300546288
+      "sourceTriangles": 6152,
+      "triangles": 1538,
+      "error": 0.0007830674294382334
     },
     "sideRight": {
-      "sourceTriangles": 13234,
-      "triangles": 3308,
-      "error": 0.00044723672908730805
+      "sourceTriangles": 7129,
+      "triangles": 1781,
+      "error": 0.00047727872151881456
     },
     "armholeLeft": {
       "sourceTriangles": 9856,

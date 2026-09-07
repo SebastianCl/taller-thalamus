@@ -91,7 +91,7 @@ function BrandMark() {
           Taller 3D
         </strong>
         <span className="mt-1 hidden text-[10px] font-medium uppercase tracking-[.13em] text-muted-foreground lg:block">
-          Estudio de camisetas
+          Muestra tu identidad
         </span>
       </span>
     </div>

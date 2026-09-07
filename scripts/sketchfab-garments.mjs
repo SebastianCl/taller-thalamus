@@ -76,6 +76,14 @@ export async function readGarment(src) {
     const normalMatrix = new Matrix3().getNormalMatrix(world);
     for (const primitive of node.getMesh().listPrimitives()) {
       const index = primitive.getIndices();
+      const materialName = primitive.getMaterial()?.getName();
+      // The camisilla source contains a second, nearly coincident inner shell.
+      // Keeping it causes z-fighting against the outer fabric in the editor.
+      if (
+        src.id === 'taller-camisilla-v1' &&
+        materialName === 'Inside_Body'
+      )
+        continue;
       // Material2868 is thousands of individual stitch tubes, not garment fabric.
       // Remove that sub-pixel detail; preserve the complete shell and its hems.
       if (
