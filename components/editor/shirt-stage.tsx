@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { Box, MousePointer2, Rotate3D, Home, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { StageToolbar } from '@/components/editor/stage-toolbar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { getLayerFrame, getLayerHandlePoint, hitTestLayer, hitTestLayerHandle, renderAtlas, type LayerFrame, type LayerHandle, type PixelRect } from '@/lib/atlas';
 import { MODEL_MANIFEST, localPointFromAtlasUv, zoneFromAtlasUv } from '@/lib/model-manifest';
@@ -695,10 +696,11 @@ export function ShirtStage() {
 
   if (webgl2 === false) {
     return (
-      <div className="editor-grid flex h-full items-center justify-center p-6" role="alert">
+      <div className="editor-grid relative flex h-full items-center justify-center p-6" role="alert">
         <div className="max-w-sm rounded-2xl border bg-card p-6 text-center shadow-sm">
           <Box className="mx-auto mb-3 size-9 text-muted-foreground" />
           <h2 className="font-heading text-lg font-bold">Tu navegador no ofrece WebGL 2</h2>
+          <StageToolbar />
           <p className="mt-2 text-sm text-muted-foreground">Puedes conservar e importar proyectos, pero el visor 3D necesita aceleración gráfica.</p>
         </div>
       </div>
@@ -799,12 +801,12 @@ export function ShirtStage() {
         <Button aria-pressed={interactionMode === 'rotate'} variant={interactionMode === 'rotate' ? 'default' : 'ghost'} size="sm" className="h-9" onClick={() => setInteractionMode('rotate')}><Rotate3D /> Girar</Button>
       </div>
 
-      <div className="absolute right-2 top-2 flex flex-col gap-1 rounded-xl border bg-card/90 p-1 shadow-lg backdrop-blur-md md:right-5 md:top-1/2 md:-translate-y-1/2">
+      <StageToolbar>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Restablecer vista" onClick={() => { setView('front'); controlsRef.current?.reset(); }} />}><Home /></TooltipTrigger><TooltipContent side="left">Restablecer vista</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Acercar cámara" onClick={() => zoom(0.82)} />}><ZoomIn /></TooltipTrigger><TooltipContent side="left">Acercar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Alejar cámara" onClick={() => zoom(1.22)} />}><ZoomOut /></TooltipTrigger><TooltipContent side="left">Alejar</TooltipContent></Tooltip>
         <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Girar" onClick={() => setView(view === 'front' ? 'back' : 'front')} />}><RefreshCw /></TooltipTrigger><TooltipContent side="left">Girar 180°</TooltipContent></Tooltip>
-      </div>
+      </StageToolbar>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-sidebar-border bg-sidebar/90 p-1 text-sidebar-foreground shadow-lg backdrop-blur md:flex">
         <Button aria-pressed={interactionMode === 'move'} variant="ghost" size="sm" className={cn('h-9 text-xs text-white hover:bg-white/12 hover:text-white', interactionMode === 'move' && 'bg-sky-500 hover:bg-sky-500')} onClick={() => setInteractionMode('move')}><MousePointer2 /> Editar</Button>

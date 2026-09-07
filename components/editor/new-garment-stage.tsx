@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { StageToolbar } from '@/components/editor/stage-toolbar';
 import {
   Tooltip,
   TooltipContent,
@@ -793,7 +794,7 @@ export function NewGarmentStage() {
   if (webgl2 === false) {
     return (
       <div
-        className="editor-grid flex h-full items-center justify-center p-6"
+        className="editor-grid relative flex h-full items-center justify-center p-6"
         role="alert"
       >
         <div className="max-w-sm rounded-2xl border bg-card p-6 text-center shadow-sm">
@@ -801,6 +802,7 @@ export function NewGarmentStage() {
           <h2 className="font-heading text-lg font-bold">
             Tu navegador no ofrece WebGL 2
           </h2>
+          <StageToolbar />
           <p className="mt-2 text-sm text-muted-foreground">
             Puedes conservar e importar proyectos, pero el visor 3D necesita
             aceleración gráfica.
@@ -1001,7 +1003,7 @@ export function NewGarmentStage() {
         </Button>
       </div>
 
-      <div className="absolute right-2 top-2 flex flex-col gap-1 rounded-xl border bg-card/90 p-1 shadow-lg backdrop-blur-md md:right-5 md:top-1/2 md:-translate-y-1/2">
+      <StageToolbar>
         <Tooltip>
           <TooltipTrigger
             render={
@@ -1065,7 +1067,7 @@ export function NewGarmentStage() {
           </TooltipTrigger>
           <TooltipContent side="left">Girar 180°</TooltipContent>
         </Tooltip>
-      </div>
+      </StageToolbar>
 
       <div className="absolute bottom-4 left-4 hidden items-center gap-1 rounded-xl border border-sidebar-border bg-sidebar/90 p-1 text-sidebar-foreground shadow-lg backdrop-blur md:flex">
         <Button

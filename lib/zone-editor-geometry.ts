@@ -9,7 +9,6 @@ export function fitZone(
   height: number,
   rect: PixelRect,
   zoom: number,
-  pan: Point,
 ): Viewport {
   const scale =
     Math.max(
@@ -22,8 +21,8 @@ export function fitZone(
     ) * zoom;
   return {
     scale,
-    x: (width - rect.width * scale) / 2 + pan.x,
-    y: (height - rect.height * scale) / 2 + pan.y,
+    x: (width - rect.width * scale) / 2,
+    y: (height - rect.height * scale) / 2,
   };
 }
 
@@ -103,21 +102,4 @@ export function rotationDelta(
       180) /
     Math.PI;
   return ((angle + 540) % 360) - 180;
-}
-
-export function snapCenter(
-  point: Point,
-  width: number,
-  height: number,
-  scale: number,
-  enabled: boolean,
-) {
-  const snapX = enabled && Math.abs(point.x - width / 2) * scale < 8;
-  const snapY = enabled && Math.abs(point.y - height / 2) * scale < 8;
-  return {
-    x: snapX ? width / 2 : point.x,
-    y: snapY ? height / 2 : point.y,
-    snapX,
-    snapY,
-  };
 }

@@ -44,6 +44,7 @@ import { getActiveCapture } from '@/lib/stage-capture';
 import { getGarment } from '@/lib/garments';
 import { ToolPanelContent } from '@/components/editor/tool-panel';
 import { ZoneEditor } from '@/components/editor/zone-editor';
+import { EditorViewContext } from '@/components/editor/stage-toolbar';
 import { clearSession } from '@/lib/persistence';
 import { downloadBlob, exportProject, importProject } from '@/lib/project-io';
 import { type ToolId } from '@/lib/design';
@@ -540,13 +541,30 @@ export function EditorShell() {
             <ToolRail />
             <ContextPanel />
             <div className="flex min-w-0 flex-1 flex-col">
-              <fieldset className="flex shrink-0 gap-1 border-b bg-card p-2" aria-label="Vista del editor">
-                {(['3d', '2d'] as const).map((view) => <Button key={view} size="sm" variant={editorView === view ? 'secondary' : 'ghost'} aria-pressed={editorView === view} disabled={exporting} onClick={() => { useEditorStore.getState().endGesture(); setEditorView(view); }}>{view.toUpperCase()}</Button>)}
-              </fieldset>
-              <div className="relative min-h-0 flex-1">
-                <div className="absolute inset-0" aria-hidden={editorView === '2d'} inert={editorView === '2d'}><ShirtStage /></div>
-                {editorView === '2d' && <div className="absolute inset-0 z-10 bg-background"><ZoneEditor /></div>}
-              </div>
+              <EditorViewContext.Provider
+                value={{
+                  view: editorView,
+                  toggleView: () => {
+                    useEditorStore.getState().endGesture();
+                    setEditorView((view) => view === '2d' ? '3d' : '2d');
+                  },
+                }}
+              >
+                <div className="relative min-h-0 flex-1">
+                  <div
+                    className="absolute inset-0"
+                    aria-hidden={editorView === '2d'}
+                    inert={editorView === '2d'}
+                  >
+                    <ShirtStage />
+                  </div>
+                  {editorView === '2d' && (
+                    <div className="absolute inset-0 z-10 bg-background">
+                      <ZoneEditor />
+                    </div>
+                  )}
+                </div>
+              </EditorViewContext.Provider>
               {mobileToolsOpen && <ContextPanel mobile compact={editorView === '2d'} />}
             </div>
           </div>

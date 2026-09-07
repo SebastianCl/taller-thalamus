@@ -10,7 +10,6 @@ import {
   resizeLayer,
   rotationDelta,
   screenToZone,
-  snapCenter,
 } from '@/lib/zone-editor-geometry';
 import { useEditorStore } from '@/store/editor-store';
 
@@ -19,9 +18,9 @@ describe('geometría del editor 2D', () => {
   const frame = { x: 150, y: 200, width: 100, height: 40 };
 
   it.each([0.5, 1, 4])(
-    'convierte coordenadas con zoom %s y desplazamiento',
+    'convierte coordenadas con zoom %s y lienzo centrado',
     (zoom) => {
-      const viewport = fitZone(700, 550, rect, zoom, { x: 42, y: -31 });
+      const viewport = fitZone(700, 550, rect, zoom);
       const point = screenToZone(
         {
           x: viewport.x + 70 * viewport.scale,
@@ -79,20 +78,6 @@ describe('geometría del editor 2D', () => {
     );
   });
 
-  it('ajusta dentro de 8 píxeles de pantalla, independientemente del zoom', () => {
-    expect(snapCenter({ x: 147, y: 203 }, 300, 400, 2, true)).toMatchObject({
-      x: 150,
-      y: 200,
-      snapX: true,
-      snapY: true,
-    });
-    expect(snapCenter({ x: 146, y: 200 }, 300, 400, 2, true).snapX).toBe(false);
-    expect(snapCenter({ x: 147, y: 203 }, 300, 400, 2, false)).toMatchObject({
-      x: 147,
-      y: 203,
-    });
-  });
-
   it.each(MODEL_IDS)(
     'usa las proporciones del atlas para todas las zonas de %s',
     (modelId) => {
@@ -101,7 +86,7 @@ describe('geometría del editor 2D', () => {
         const [source] = pixelRects(zone, 1024, null, manifest);
         expect(source.width).toBeGreaterThan(0);
         expect(source.height).toBeGreaterThan(0);
-        const viewport = fitZone(320, 200, source, 1, { x: 0, y: 0 });
+        const viewport = fitZone(320, 200, source, 1);
         expect(Number.isFinite(viewport.scale)).toBe(true);
         expect(source.width * viewport.scale).toBeLessThanOrEqual(320);
         expect(source.height * viewport.scale).toBeLessThanOrEqual(200);
