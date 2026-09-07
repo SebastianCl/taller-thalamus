@@ -214,6 +214,20 @@ function ZoneCanvas() {
     ctx.strokeStyle = '#0284c7';
     ctx.stroke();
     ctx.setLineDash([]);
+
+    // Alignment guides through the center of the active zone.
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(rect.width / 2, 0);
+    ctx.lineTo(rect.width / 2, rect.height);
+    ctx.moveTo(0, rect.height / 2);
+    ctx.lineTo(rect.width, rect.height / 2);
+    ctx.setLineDash([8 / viewport.scale, 6 / viewport.scale]);
+    ctx.lineWidth = 1 / viewport.scale;
+    ctx.strokeStyle = 'rgba(14, 116, 144, 0.65)';
+    ctx.stroke();
+    ctx.restore();
+
     const layer = design.layers.find(
       (item) => item.id === selectedId && item.zone === zone && item.visible,
     );
