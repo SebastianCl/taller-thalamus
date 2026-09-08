@@ -8,6 +8,7 @@ import {
   Download,
   FilePlus2,
   FolderOpen,
+  FolderKanban,
   ImagePlus,
   Layers3,
   LoaderCircle,
@@ -18,8 +19,10 @@ import {
   Moon,
   Sun,
   Type,
+  Trash2,
   Undo2,
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import {
   AlertDialog,
@@ -41,13 +44,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { getActiveCapture } from '@/lib/stage-capture';
+import type { ProjectVersionSummary } from '@/lib/persistence';
+import type { ProjectSummary } from '@/lib/persistence';
 import { getGarment } from '@/lib/garments';
 import { ToolPanelContent } from '@/components/editor/tool-panel';
 import { ZoneEditor } from '@/components/editor/zone-editor';
 import { EditorViewContext } from '@/components/editor/stage-toolbar';
-import { clearSession } from '@/lib/persistence';
 import { downloadBlob, exportProject, importProject } from '@/lib/project-io';
-import { type ToolId } from '@/lib/design';
+import { createDocument, type ToolId } from '@/lib/design';
 import { cn } from '@/lib/utils';
 import { useAutosave } from '@/hooks/use-autosave';
 import { useTheme } from '@/hooks/use-theme';
@@ -257,9 +261,13 @@ function ThemeToggle() {
 export function EditorShell() {
   const [editorView, setEditorView] = useState<'2d' | '3d'>('3d');
   const [newDialog, setNewDialog] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ProjectSummary | null>(null);
+  const [versions, setVersions] = useState<ProjectVersionSummary[]>([]);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const importInput = useRef<HTMLInputElement>(null);
-  const saveNow = useAutosave();
+  const projectLibrary = useAutosave();
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);
   const canUndo = useEditorStore((state) => state.past.length > 0);
@@ -267,15 +275,10 @@ export function EditorShell() {
   const stageReady = useEditorStore((state) => state.stageModelId === state.document.modelId && state.stageStatus === 'ready');
   const exporting = useEditorStore((state) => state.exportStatus === 'working');
   const setExportStatus = useEditorStore((state) => state.setExportStatus);
-  const newDesign = useEditorStore((state) => state.newDesign);
-  const replaceImportedDesign = useEditorStore(
-    (state) => state.replaceImportedDesign,
-  );
 
   const handleNewDesign = useCallback(async () => {
     try {
-      await clearSession();
-      newDesign();
+      await projectLibrary.create('Diseño sin título', { document: createDocument(), assets: {} });
       setNewDialog(false);
     } catch {
       toast.add({
@@ -285,7 +288,7 @@ export function EditorShell() {
         type: 'error',
       });
     }
-  }, [newDesign]);
+  }, [projectLibrary]);
 
   const handleExport = useCallback(async () => {
     if (useEditorStore.getState().exportStatus === 'working') return;
@@ -332,7 +335,14 @@ export function EditorShell() {
     if (!file) return;
     try {
       const project = await importProject(file);
-      replaceImportedDesign(project.document, project.assets);
+      const name = file.name.replace(/\.zip$/i, '').trim() || 'Proyecto importado';
+      const ids = new Map<string, string>();
+      const assets = Object.fromEntries(Object.values(project.assets).map((asset) => {
+        const id = crypto.randomUUID(); ids.set(asset.id, id); return [id, { ...asset, id }];
+      }));
+      const document = structuredClone(project.document);
+      document.layers = document.layers.map((layer) => layer.type === 'image' ? { ...layer, assetId: ids.get(layer.assetId) ?? layer.assetId } : layer);
+      await projectLibrary.create(name, { document, assets });
       toast.add({
         title: 'Proyecto restaurado',
         description:
@@ -350,6 +360,22 @@ export function EditorShell() {
       if (importInput.current) importInput.current.value = '';
     }
   };
+
+  const captureThumbnail = useCallback(async () => {
+    const state = useEditorStore.getState();
+    if (state.stageStatus !== 'ready' || state.stageModelId !== state.document.modelId) return null;
+    try {
+      const source = (await getActiveCapture(state.document.modelId)()).front;
+      const url = URL.createObjectURL(source);
+      try {
+        const image = new Image();
+        await new Promise<void>((resolve, reject) => { image.onload = () => resolve(); image.onerror = () => reject(new Error('No se pudo crear la miniatura.')); image.src = url; });
+        const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 320;
+        canvas.getContext('2d')?.drawImage(image, 0, 0, 320, 320);
+        return await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      } finally { URL.revokeObjectURL(url); }
+    } catch { return null; }
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -438,6 +464,12 @@ export function EditorShell() {
                 <TooltipContent>Deshacer · Ctrl Z</TooltipContent>
               </Tooltip>
               <Tooltip>
+                <TooltipTrigger render={<Button variant="ghost" size="icon-lg" aria-label="Proyectos" onClick={() => setLibraryOpen(true)} />}>
+                  <FolderKanban />
+                </TooltipTrigger>
+                <TooltipContent>Proyectos</TooltipContent>
+              </Tooltip>
+              <Tooltip>
                 <TooltipTrigger
                   render={
                     <Button
@@ -489,7 +521,7 @@ export function EditorShell() {
                 variant="outline"
                 className="hidden h-10 lg:flex"
                 onClick={() =>
-                  void saveNow()
+                  void captureThumbnail().then((thumbnail) => projectLibrary.saveNow(thumbnail))
                     .then(() =>
                       toast.add({
                         title: 'Diseño guardado',
@@ -592,6 +624,54 @@ export function EditorShell() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
+          <DialogContent className="max-h-[82dvh] max-w-4xl overflow-y-auto sm:max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Biblioteca de proyectos</DialogTitle>
+              <DialogDescription>Todos los diseños se guardan en este dispositivo.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {projectLibrary.projects.map((project) => (
+                <article key={project.id} className={cn('overflow-hidden rounded-xl border bg-card', project.id === projectLibrary.activeProject?.id && 'ring-2 ring-sky-400')}>
+                  <div className="grid aspect-square place-items-center bg-gradient-to-br from-sky-100 to-slate-100 dark:from-sky-950 dark:to-slate-900">
+                    {project.thumbnail ? <img className="size-full object-cover" src={URL.createObjectURL(project.thumbnail)} alt="Miniatura del proyecto" /> : <Shirt className="size-16 text-sky-500/60" />}
+                  </div>
+                  <div className="space-y-2 p-3">
+                    <input aria-label="Nombre del proyecto" defaultValue={project.name} onBlur={(event) => void projectLibrary.rename(project.id, event.currentTarget.value)} className="w-full bg-transparent font-medium outline-none focus:ring-2 focus:ring-sky-400" />
+                    <p className="text-xs text-muted-foreground">Actualizado {new Date(project.updatedAt).toLocaleString()}</p>
+                    <div className="grid grid-cols-[auto_1fr_1fr_2.75rem] items-center gap-1">
+                      <Button size="sm" variant={project.id === projectLibrary.activeProject?.id ? 'secondary' : 'outline'} className="min-w-0 px-2" onClick={() => void projectLibrary.load(project.id).then(() => setLibraryOpen(false))}>{project.id === projectLibrary.activeProject?.id ? 'Abierto' : 'Abrir'}</Button>
+                      <Button size="sm" variant="ghost" className="min-w-0 px-1.5" onClick={() => void projectLibrary.duplicate(project.id)}>Duplicar</Button>
+                      <Button size="sm" variant="ghost" className="min-w-0 px-1.5" onClick={() => void projectLibrary.versions(project.id).then((items) => { setVersions(items); setVersionsOpen(true); })}>Versiones</Button>
+                      <Button size="icon" variant="ghost" className="size-11 text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={projectLibrary.projects.length <= 1} onClick={() => setDeleteTarget(project)}><Trash2 /> <span className="sr-only">Eliminar proyecto</span></Button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+        <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar “{deleteTarget?.name}”?</AlertDialogTitle>
+              <AlertDialogDescription>Se eliminarán este proyecto y su historial de versiones de este dispositivo. Esta acción no se puede deshacer.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { if (deleteTarget) void projectLibrary.remove(deleteTarget.id).then(() => setDeleteTarget(null)); }}>Eliminar proyecto</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <Dialog open={versionsOpen} onOpenChange={setVersionsOpen}>
+          <DialogContent className="max-h-[75dvh] max-w-lg overflow-y-auto">
+            <DialogHeader><DialogTitle>Historial de versiones</DialogTitle><DialogDescription>Restaurar conserva primero el estado actual.</DialogDescription></DialogHeader>
+            <div className="space-y-2">
+              {versions.length === 0 && <p className="text-sm text-muted-foreground">Todavía no hay versiones manuales.</p>}
+              {versions.map((version) => <div key={version.id} className="flex items-center justify-between rounded-lg border p-3"><span className="text-sm">{new Date(version.createdAt).toLocaleString()}</span><Button size="sm" onClick={() => void projectLibrary.restore(version.id).then(() => { setVersionsOpen(false); setLibraryOpen(false); })}>Restaurar</Button></div>)}
+            </div>
+          </DialogContent>
+        </Dialog>
       </Toaster>
     </TooltipProvider>
   );

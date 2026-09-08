@@ -1,8 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-
-import { loadSession, saveSession } from '@/lib/persistence';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createProject, deleteProject, duplicateProject, getActiveProject, listProjects, listVersions, openProject, renameProject, restoreVersion, saveProject, saveVersion, type ProjectSummary } from '@/lib/persistence';
 import { parseDesignDocument } from '@/lib/schema';
 import { useEditorStore } from '@/store/editor-store';
 
@@ -12,55 +11,79 @@ export function useAutosave() {
   const hydrate = useEditorStore((state) => state.hydrate);
   const setAutosaveStatus = useEditorStore((state) => state.setAutosaveStatus);
   const [ready, setReady] = useState(false);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [activeProject, setActiveProject] = useState<ProjectSummary | null>(null);
+  const writes = useRef(Promise.resolve());
+  const projectId = useRef<string | null>(null);
+  const enqueue = useCallback(<T,>(operation: () => Promise<T>) => {
+    const next = writes.current.then(operation, operation);
+    writes.current = next.then(() => undefined, () => undefined);
+    return next;
+  }, []);
+  const refresh = useCallback(async () => setProjects(await listProjects(useEditorStore.getState().document)), []);
 
   useEffect(() => {
-    let active = true;
-    const initialDocument = useEditorStore.getState().document;
-    void loadSession()
-      .then((session) => {
-        if (!active) return;
-        if (session.document) {
-          const current = useEditorStore.getState().document;
-          const unchangedSinceMount = current.id === initialDocument.id && current.modifiedAt === initialDocument.modifiedAt;
-          try {
-            const parsed = parseDesignDocument(session.document);
-            if (unchangedSinceMount) hydrate(parsed, session.assets);
-            else for (const asset of Object.values(session.assets)) URL.revokeObjectURL(asset.previewUrl);
-          } catch {
-            for (const asset of Object.values(session.assets)) URL.revokeObjectURL(asset.previewUrl);
-          }
-        }
-        setReady(true);
-        setAutosaveStatus('saved');
-      })
-      .catch(() => {
-        if (!active) return;
-        setReady(true);
-        setAutosaveStatus('error');
-      });
-    return () => { active = false; };
-  }, [hydrate, setAutosaveStatus]);
+    let alive = true;
+    void enqueue(async () => {
+      const loaded = await getActiveProject(useEditorStore.getState().document);
+      if (!alive) return;
+      projectId.current = loaded.project.id;
+      hydrate(parseDesignDocument(loaded.document), loaded.assets);
+      setActiveProject(loaded.project); await refresh(); setReady(true); setAutosaveStatus('saved');
+    }).catch(() => { if (alive) { setReady(true); setAutosaveStatus('error'); } });
+    return () => { alive = false; };
+  }, [enqueue, hydrate, refresh, setAutosaveStatus]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !projectId.current) return;
     setAutosaveStatus('saving');
     const timeout = window.setTimeout(() => {
-      void saveSession(document, assets)
-        .then(() => setAutosaveStatus('saved'))
-        .catch(() => setAutosaveStatus('error'));
+      const state = useEditorStore.getState(); const id = projectId.current;
+      if (!id) return;
+      void enqueue(() => saveProject(id, state.document, state.assets))
+        .then((project) => { setActiveProject(project); return refresh(); })
+        .then(() => setAutosaveStatus('saved')).catch(() => setAutosaveStatus('error'));
     }, 750);
     return () => window.clearTimeout(timeout);
-  }, [assets, document, ready, setAutosaveStatus]);
+  }, [assets, document, enqueue, ready, refresh, setAutosaveStatus]);
 
-  return useCallback(async () => {
-    setAutosaveStatus('saving');
-    try {
-      const state = useEditorStore.getState();
-      await saveSession(state.document, state.assets);
-      setAutosaveStatus('saved');
-    } catch (error) {
-      setAutosaveStatus('error');
-      throw error;
-    }
-  }, [setAutosaveStatus]);
+  const saveNow = useCallback(async (thumbnail: Blob | null = null) => {
+    const id = projectId.current; if (!id) return;
+    setAutosaveStatus('saving'); const state = useEditorStore.getState();
+    await enqueue(() => saveVersion(id, state.document, state.assets, thumbnail));
+    const loaded = await openProject(id); setActiveProject(loaded.project); await refresh(); setAutosaveStatus('saved');
+  }, [enqueue, refresh, setAutosaveStatus]);
+
+  const load = useCallback(async (id: string) => {
+    const state = useEditorStore.getState(); state.endGesture();
+    if (projectId.current) await enqueue(() => saveProject(projectId.current!, state.document, state.assets));
+    const loaded = await enqueue(() => openProject(id));
+    for (const asset of Object.values(useEditorStore.getState().assets)) URL.revokeObjectURL(asset.previewUrl);
+    projectId.current = loaded.project.id; hydrate(loaded.document, loaded.assets); setActiveProject(loaded.project); await refresh();
+  }, [enqueue, hydrate, refresh]);
+
+  const create = useCallback(async (name = 'Diseño sin título', source = { document: useEditorStore.getState().document, assets: useEditorStore.getState().assets }) => {
+    const state = useEditorStore.getState(); state.endGesture();
+    if (projectId.current) await enqueue(() => saveProject(projectId.current!, state.document, state.assets));
+    const loaded = await enqueue(() => createProject(name, source.document, source.assets));
+    for (const asset of Object.values(useEditorStore.getState().assets)) URL.revokeObjectURL(asset.previewUrl);
+    projectId.current = loaded.project.id; hydrate(loaded.document, loaded.assets); setActiveProject(loaded.project); await refresh();
+  }, [enqueue, hydrate, refresh]);
+
+  return { ready, projects, activeProject, saveNow, load, create, refresh,
+    rename: async (id: string, name: string) => { await renameProject(id, name); await refresh(); },
+    duplicate: async (id: string) => { const loaded = await duplicateProject(id); await refresh(); return loaded.project; },
+    remove: async (id: string) => {
+      const nextId = await enqueue(() => deleteProject(id));
+      if (nextId && id === projectId.current) {
+        projectId.current = null;
+        const loaded = await enqueue(() => openProject(nextId));
+        for (const asset of Object.values(useEditorStore.getState().assets)) URL.revokeObjectURL(asset.previewUrl);
+        projectId.current = loaded.project.id; hydrate(loaded.document, loaded.assets); setActiveProject(loaded.project);
+      }
+      await refresh();
+    },
+    versions: listVersions,
+    restore: async (versionId: string) => { const id = projectId.current; if (!id) return; const state = useEditorStore.getState(); const loaded = await restoreVersion(id, versionId, state.document, state.assets); for (const asset of Object.values(state.assets)) URL.revokeObjectURL(asset.previewUrl); hydrate(loaded.document, loaded.assets); setActiveProject(loaded.project); await refresh(); },
+  };
 }
